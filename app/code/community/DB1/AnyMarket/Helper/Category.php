@@ -252,9 +252,6 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
                 return array($JSONReturn->id);
             }
         }else{
-            $amCatPar = Mage::getModel('db1_anymarket/anymarketcategories')->load($IdParent, 'nmc_id_magento');
-            $IdParent = $amCatPar->getData('nmc_cat_id');
-            $JSON["parent"] = array("id" => $IdParent);
 
             $returnCatPUT = $this->CallAPICurl("PUT", $HOST."/v2/categories/".$anymarketcategories->getNmcCatId(), $headers, $JSON);
 
