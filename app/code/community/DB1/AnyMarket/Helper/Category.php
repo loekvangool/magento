@@ -476,7 +476,8 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
 
         $product = Mage::getModel('catalog/product')->load($idProduct);
         $categoryCollection = $product->getCategoryCollection()
-            ->addAttributeToSelect('name');
+            ->addAttributeToSelect('name')
+            ->setOrder('path', 'ASC');
 
         $ignoredCategories = array();
         do {
