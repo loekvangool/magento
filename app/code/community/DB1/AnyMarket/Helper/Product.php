@@ -978,13 +978,6 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                         array_push($arrProd, 'Price (' . $simpConfProdSku . ')');
                     }
 
-                    // verificacao dos dados de SKU
-                    $cValid = array('.', '-', '_');
-
-                    if (!ctype_alnum(str_replace($cValid, '', $simpConfProdSku))) {
-                        array_push($arrProd, 'SKU (' . $simpConfProdSku . ')');
-                    }
-
                     $stock = Mage::getModel('cataloginventory/stock_item')->loadByProduct($SimpleConfigProd);
                     if ($SimpleConfigProd->getData('integra_anymarket') == 1 && $SimpleConfigProd->getStatus() == 1){
                         $ArrSimpleConfigProd[] = array(
@@ -1028,12 +1021,6 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                 // verificacao dos dados de price
                 if(($stkPrice == null) || ($stkPrice == '')  || ((float)$stkPrice <= 0)){
                     array_push($arrProd, 'Price ('.$prodSkuJ.')');
-                }
-
-                // verificacao dos dados de SKU
-                $cValid = array('.', '-', '_');
-                if(!ctype_alnum(str_replace($cValid, '', $prodSkuJ))) {
-                    array_push($arrProd, 'SKU ('.$prodSkuJ.')');
                 }
 
                 $ArrSimpleConfigProd[] = array(
