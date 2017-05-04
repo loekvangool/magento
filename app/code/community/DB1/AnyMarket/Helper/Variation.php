@@ -22,14 +22,18 @@ class DB1_AnyMarket_Helper_Variation extends DB1_AnyMarket_Helper_Data
         while ($startRec <= $countRec) {
             $variationGetRet = $this->CallAPICurl("GET", $HOST . "/v2/variations/?offset=" . $startRec . "&limit=30", $headers, null);
 
-            if ($variationGetRet['error'] == '0') {
+            if ($variationGetRet['error'] == '0' ) {
                 $variationJSON = $variationGetRet['return'];
+                if( isset($variationJSON->page->totalElements) ){
+                    $startRec = $startRec + $variationJSON->page->size;
+                    $countRec = $variationJSON->page->totalElements;
 
-                $startRec = $startRec + $variationJSON->page->size;
-                $countRec = $variationJSON->page->totalElements;
-
-                foreach ($variationJSON->content as $variation) {
-                    array_push($variationsArr, array("id" => $variation->id, "name" => $variation->name));
+                    foreach ($variationJSON->content as $variation) {
+                        array_push($variationsArr, array("id" => $variation->id, "name" => $variation->name));
+                    }
+                }else{
+                    $startRec = 1;
+                    $countRec = 0;                    
                 }
             } else {
                 $startRec = 1;

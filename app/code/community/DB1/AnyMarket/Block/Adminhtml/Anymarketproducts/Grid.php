@@ -65,10 +65,30 @@ class DB1_AnyMarket_Block_Adminhtml_Anymarketproducts_Grid extends Mage_Adminhtm
         Mage::app()->setCurrentStore($store_id);
         $store_id = Mage::app()->getStore()->getId();
         Mage::getSingleton('core/session')->setStoreListProdVariable($store_id);
+
         $collection = Mage::getModel('db1_anymarket/anymarketproducts')
             ->getCollection()
             ->setOrder('entity_id','DESC');
-        
+
+        $productIntegrate = Mage::getSingleton('eav/config')->getAttribute('catalog_product','integra_anymarket');
+        $idAttr = $productIntegrate->getId();
+        $productCategTable = Mage::getSingleton('core/resource')->getTableName('catalog/category_product');
+        $selCollection = $collection->getSelect();
+
+        $selCollection->joinLeft(
+                array('product_category' => $productCategTable),
+                'product_category.product_id = main_table.nmp_id',
+                array('product_category.product_id')
+            );
+        if( $idAttr ) {
+            $selCollection->join(
+                array('product_attribute' => $productIntegrate->getBackendTable()),
+                'product_attribute.entity_id = main_table.nmp_id AND product_attribute.attribute_id = ' . $idAttr,
+                array('product_attribute.value')
+            );
+        }
+        $selCollection->group('main_table.entity_id');
+
         $this->setCollection($collection);
         return parent::_prepareCollection();
     }
@@ -101,17 +121,32 @@ class DB1_AnyMarket_Block_Adminhtml_Anymarketproducts_Grid extends Mage_Adminhtm
             )
         );
         $this->addColumn(
-            'status',
+            'category',
             array(
-                'header'  => Mage::helper('db1_anymarket')->__('Will be integrated'),
-                'index'   => 'status',
-                'type'    => 'options',
-                'options' => array(
-                    '1' => Mage::helper('db1_anymarket')->__('Yes'),
-                    '0' => Mage::helper('db1_anymarket')->__('No'),
-                )
+                'header' => Mage::helper('db1_anymarket')->__('Category'),
+                'index' => 'category_id',
+                'filter_index' => 'category_id',
+                'sortable'	=> false,
+    			'width' => '250px',
+				'type'  => 'options',
+                'options'	=> Mage::getSingleton('db1_anymarket/system_config_source_categories_category')->toOptionArray(),
+                'renderer'	=> 'db1_anymarket/Adminhtml_Anymarketproducts_grid_render_category'
             )
         );
+        if( Mage::getSingleton('eav/config')->getAttribute('catalog_product','integra_anymarket')->getId() ){
+            $this->addColumn(
+                'value',
+                array(
+                    'header' => Mage::helper('db1_anymarket')->__('Will be integrated'),
+                    'index' => 'value',
+                    'type' => 'options',
+                    'options' => array(
+                        '1' => Mage::helper('db1_anymarket')->__('Yes'),
+                        '0' => Mage::helper('db1_anymarket')->__('No'),
+                    )
+                )
+            );
+        }
         $this->addColumn(
             'nmp_status_int',
             array(

@@ -252,9 +252,6 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
                 return array($JSONReturn->id);
             }
         }else{
-            $amCatPar = Mage::getModel('db1_anymarket/anymarketcategories')->load($IdParent, 'nmc_id_magento');
-            $IdParent = $amCatPar->getData('nmc_cat_id');
-            $JSON["parent"] = array("id" => $IdParent);
 
             $returnCatPUT = $this->CallAPICurl("PUT", $HOST."/v2/categories/".$anymarketcategories->getNmcCatId(), $headers, $JSON);
 
@@ -407,6 +404,92 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
             $anymarketlog->save();
         }
         return $retCategCount;
+    }
+
+    /**
+     * Find category in Anymarket by full path
+     *
+     * @param $anymarketCategories
+     * @param $fullPathMagento
+     * @param $currIndexFullPath
+     *
+     * @return boolean
+     */
+    private function findInAnymarketByFullPath($anymarketCategories, $fullPathMagento, $currIndexFullPath, $fullPathAnymarket){
+        foreach ($anymarketCategories as $categ) {
+            $categAnymarket = (string)strtolower($categ->name);
+            $categMagento   = (string)strtolower($fullPathMagento[$currIndexFullPath]);
+
+            $categAnymarket = str_replace(' ', '', $categAnymarket);
+            $categMagento   = str_replace(' ', '', $categMagento);
+            if( $categMagento == $categAnymarket ){
+                array_push($fullPathAnymarket, $categ->name);
+
+                $jsonCmpMagento = json_encode($fullPathMagento);
+                $jsonCmpAnymarket = json_encode($fullPathAnymarket);
+
+                $jsonCmpMagento = str_replace(' ', '', $jsonCmpMagento);
+                $jsonCmpAnymarket = str_replace(' ', '', $jsonCmpAnymarket);
+
+                if( $jsonCmpAnymarket == $jsonCmpMagento ){
+                    return isset($categ->children) ? false : $categ->id;
+                }else {
+                    $currIndexFullPath += 1;
+                    $retProc = $this->findInAnymarketByFullPath($categ->children, $fullPathMagento, $currIndexFullPath, $fullPathAnymarket);
+                    return $retProc != null || $retProc == false ? $retProc : $categ->id;
+                }
+            }
+        }
+        return null;
+    }
+
+    private function verifyCategoryForSend($categoryCollection, $ignoredCategories){
+        $completePathCateg = array();
+        $lastLevel = 1;
+        $lastParentId = null;
+        $idsUsedCategory = array();
+        foreach ($categoryCollection as $categ) {
+            if( $categ->getData('name') != null && $categ->getData('level') > $lastLevel ){
+                if( $this->in_array_r($categ->getData('entity_id'), $ignoredCategories) ){
+                    continue;
+                }
+                if( $lastParentId == null || $categ->getData('parent_id') == $lastParentId){
+                    array_push($completePathCateg, $categ->getData('name') );
+                    $lastParentId = $categ->getData('entity_id');
+                    array_push($idsUsedCategory, $lastParentId);
+                    $lastLevel += 1;
+                }
+            }
+        }
+
+        return array($idsUsedCategory, $completePathCateg);
+    }
+
+    public function valideCategoryToSend($HOST, $TOKEN, $idProduct){
+        $headers = array(
+            "Content-type: application/json",
+            "Accept: */*",
+            "gumgaToken: ".$TOKEN
+        );
+
+        $anymarketCategories = $this->CallAPICurl("GET", $HOST."/v2/categories/fullPath", $headers, null);
+
+        $product = Mage::getModel('catalog/product')->load($idProduct);
+        $categoryCollection = $product->getCategoryCollection()
+            ->addAttributeToSelect('name')
+            ->setOrder('path', 'ASC');
+
+        $ignoredCategories = array();
+        do {
+            $fullPathMagento = $this->verifyCategoryForSend($categoryCollection, $ignoredCategories);
+            if (count($fullPathMagento[1]) <= 0) {
+                return false;
+            }
+            array_push($ignoredCategories, $fullPathMagento[0]);
+            $compatCateg = $this->findInAnymarketByFullPath($anymarketCategories["return"], $fullPathMagento[1], 0, array());
+        }while(!$compatCateg);
+
+        return $compatCateg;
     }
 
 

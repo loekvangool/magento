@@ -219,7 +219,8 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
 
         $this->_order->setPayment($orderPayment);
 
-        $this->_addProducts($storeID, $products);
+        $qtyItems = $this->_addProducts($storeID, $products);
+        $this->_order->setTotalQtyOrdered($qtyItems);
 
         $this->_order->setSubtotal($this->_subTotal)
             ->setBaseSubtotal($this->_subTotal)
@@ -277,6 +278,8 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
      * add products in order
      *
      * @param $products
+     *
+     * @return integer
      */
     protected function _addProducts($storeID, $products)
     {
@@ -284,10 +287,13 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
 
         //GROUP ITENS
         $arryProdAt = $this->groupProductByID($products);
-
+        $qtyOrdered = 0;
         foreach ($arryProdAt as $productRequest) {
             $this->_addProduct($storeID, $productRequest);
+            $qtyOrdered += $productRequest['qty'];
         }
+
+        return $qtyOrdered;
     }
 
     /**

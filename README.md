@@ -3,7 +3,7 @@ Módulo de integração AnyMarket e Magento
 ---
 Versão atual:
 ---------
-**2.14.3**
+**2.17.0**
 -----
 
 **(IMPORTANTE) ATUALIZAÇÃO**

@@ -67,7 +67,7 @@ class DB1_AnyMarket_IndexController extends Mage_Core_Controller_Front_Action {
                                     Mage::helper('db1_anymarket/queue')->addQueue($storeID, $value->content->id, 'IMP', 'PRODUCT');
                                 }else{
                                     $typeSincOrder = Mage::getStoreConfig('anymarket_section/anymarket_integration_order_group/anymarket_type_order_sync_field', $storeID);
-                                    if( $typeSincOrder == "1" ){
+                                    if( $typeSincOrder == "0" ){
                                         Mage::helper('db1_anymarket/queue')->addQueue($storeID, $value->content->id, 'IMP', 'STOCK');
                                     }
                                 }

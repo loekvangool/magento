@@ -129,8 +129,21 @@ class DB1_AnyMarket_Model_Resource_Anymarketproducts_Collection extends Mage_Cor
      */
     public function getSelectCountSql()
     {
-        $countSelect = parent::getSelectCountSql();
-        $countSelect->reset(Zend_Db_Select::GROUP);
+        $this->_renderFilters();
+        $countSelect = clone $this->getSelect();
+        $countSelect->reset(Zend_Db_Select::ORDER);
+        $countSelect->reset(Zend_Db_Select::LIMIT_COUNT);
+        $countSelect->reset(Zend_Db_Select::LIMIT_OFFSET);
+        $countSelect->reset(Zend_Db_Select::COLUMNS);
+
+        if(count($this->getSelect()->getPart(Zend_Db_Select::GROUP)) > 0) {
+            $countSelect->reset(Zend_Db_Select::GROUP);
+            $countSelect->distinct(true);
+            $group = $this->getSelect()->getPart(Zend_Db_Select::GROUP);
+            $countSelect->columns("COUNT(DISTINCT ".implode(", ", $group).")");
+        } else {
+            $countSelect->columns('COUNT(*)');
+        }
         return $countSelect;
     }
 }

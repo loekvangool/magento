@@ -216,9 +216,12 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
      * @param $IDOrderAnymarket
      * @return $order
      */
-    public function getOrderAnymarketFromHistoryComment($IDOrderAnymarket){
+    public function getOrderAnymarketFromHistoryComment($IDOrderAnymarket, $codAnyMarket){
+        $likeFilter =  '%Pedido no Canal de Vendas: </b>'.$IDOrderAnymarket.'<br>%';
+        $likeFilter .= '%Id no MarketPlace: </b>'.$codAnyMarket.'<br>%';
+
         $collection = Mage::getModel('sales/order_status_history')->getCollection()
-            ->addAttributeToFilter('comment', array('like' => '%Pedido no Canal de Vendas: </b>'.$IDOrderAnymarket.'<br>%'));
+            ->addAttributeToFilter('comment', array('like' => $likeFilter));
 
         if(count($collection) <= 0){
             return null;
@@ -365,7 +368,8 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             }
 
             $IDAnyMarket = $OrderJSON->marketPlaceNumber;
-            $ctrlOrder = $this->getOrderAnymarketFromHistoryComment( $IDAnyMarket );
+            $codAnyMarket = $OrderJSON->marketPlaceId;
+            $ctrlOrder = $this->getOrderAnymarketFromHistoryComment( $IDAnyMarket, $codAnyMarket );
             if( $ctrlOrder != null ) {
                 $IDAnyMarket = $OrderJSON->marketPlaceId;
                 $this->saveLogOrder('nmo_id_anymarket', $IDAnyMarket, 'Integrado', '', $idSeqAnyMarket, $IDAnyMarket, $ctrlOrder->getIncrementId(), $storeID);
@@ -641,6 +645,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                 if ($OrderCheck->getId()) {
 
                                     $comment = '<b>Código do Pedido no Canal de Vendas: </b>'.$OrderJSON->marketPlaceNumber.'<br>';
+                                    $comment .= '<b>Id no MarketPlace: </b>'.$OrderJSON->marketPlaceId.'<br>';
                                     $comment .= '<b>Canal de Vendas: </b>'.$OrderJSON->marketPlace.'<br>';
 
                                     if(isset($OrderJSON->shipping->promisedShippingTime)){
