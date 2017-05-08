@@ -1056,7 +1056,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                     continue;
                 }
                 if($confID == ""){
-                    if(!$this->checkArrayAttributes($ArrAttributes, "name", $attribute->getFrontendLabel())) {
+                    if($this->checkArrayAttributes($ArrAttributes, "name", $attribute->getFrontendLabel())) {
                         continue;
                     }
                     $valAttr = $this->procAttrConfig($attribute->getAttributeCode(), $product->getData($attribute->getAttributeCode()), 1);
