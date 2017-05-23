@@ -521,6 +521,26 @@
                             <frontend_type>text</frontend_type>
                         </anymarket_height_image_field>
 
+                        <anymarket_header_images_field>
+                            <label>Listagem</label>
+                            <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
+                            <sort_order>13</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                        </anymarket_header_images_field>
+
+                        <anymarket_categ_enabled_sync_field translate="label comment tooltip">
+                            <label>Enable Category Filter</label>
+                            <sort_order>14</sort_order>
+                            <comment>Enabling this filter parameters by category and Integrate with Anymarket will be added.</comment>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                        </anymarket_categ_enabled_sync_field>
+
                     </fields>
                 </anymarket_integration_prod_group>
 
@@ -980,7 +1000,7 @@
                     <comment>
                         <![CDATA[
                             <div>
-                                <h2>v. 2.17.0</h2>
+                                <h2>v. 2.18.0</h2>
                                 <hr>
                                 <h3>Desenvolvido por<br> NovaPC - Tecnologia da Informação.</h3>
                                 <img src="http://novapc.com.br/images/logo.png" alt="NovaPC" height="100" width="150">
