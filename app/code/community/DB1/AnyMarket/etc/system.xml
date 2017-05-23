@@ -521,14 +521,14 @@
                             <frontend_type>text</frontend_type>
                         </anymarket_height_image_field>
 
-                        <anymarket_header_images_field>
+                        <anymarket_header_list_field>
                             <label>Listagem</label>
                             <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
                             <sort_order>13</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
-                        </anymarket_header_images_field>
+                        </anymarket_header_list_field>
 
                         <anymarket_categ_enabled_sync_field translate="label comment tooltip">
                             <label>Enable Category Filter</label>
