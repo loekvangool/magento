@@ -157,7 +157,6 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
             curl_close($curl_handle);
 
             file_put_contents($filepath, $query);
-
             if (file_exists($filepath)) {
                 $attrIMG = array();
 
@@ -177,7 +176,7 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
             }
         } catch (Exception $e) {
             Mage::log('TRY CATCH ERROR ON CREATE IMAGE FILE '.$sku.' IMAGE '.$image_url, null, 'anymarket_dlog.log');
-            Mage::log($e, null, 'anymarket_dlog.log');
+            Mage::log($e->getMessage(), null, 'anymarket_dlog.log');
         }
 
     }
