@@ -847,6 +847,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                     if ($stockItem->getManageStock()) {
                         $stockItem->setData('qty', $stockItem->getQty() + $item->getQtyOrdered());
                     }
+                    $stockItem->setData('is_in_stock', 1);
                     $stockItem->save();
 
                     $item->setQtyCanceled($item->getQtyOrdered());
