@@ -1571,13 +1571,6 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
             $feedReturn = $this->createProducts($storeID, json_encode($ProdsJSON));
             if($feedReturn){
                 $this->changeStatusTransmission($HOST, $headers, $ProdsJSON["idTransmission"], 'Ativo', $transmissionToken);
-
-                $returnProd = array();
-                $returnProd['return'] = 'Product Created or updated.';
-                $returnProd['json'] = '';
-                $returnProd['error'] = '0';
-                $this->saveLogsProds($storeID, "1", $returnProd, $feedReturn);
-
                 $prodRet = 'Product Created or updated.';
             }
         }
@@ -1877,7 +1870,6 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
                     if($ProdCrt != ''){
                         $prodSimpleFromConfig[] = array('AttributeText' => $variationArray[ $idVar ], 'Id' => $ProdCrt);
-                        $ProdCrt = '';
                     }
                 }
 
