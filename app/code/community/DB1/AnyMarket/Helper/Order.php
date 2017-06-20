@@ -490,7 +490,8 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                     }
                                 }
 
-                                $AddressShipBill = null;
+                                $AddressBilling  = null;
+                                $AddressShipping = null;
 
                                 $firstName = $OrderJSON->buyer->name;
                                 $lastName = 'Lastname';
@@ -548,22 +549,34 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
 
                                     $customerRet = Mage::helper('db1_anymarket/customergenerator')->createCustomer($_DataCustomer);
                                     $customer = $customerRet['customer'];
-                                    $AddressShipBill = $customerRet['addr'];
+
+                                    $addressCustomerRet = $customerRet['addr'];
+                                    $AddressShipping = $addressCustomerRet[0];
+                                    if(count($addressCustomerRet) >= 2) {
+                                        $AddressBilling = $addressCustomerRet[1];
+                                    }
                                 } else {
                                     //PERCORRE OS ENDERECOS PARA VER SE JA HA CADASTRADO O INFORMADO
-                                    $needRegister = true;
+                                    $needRegisterShipp = true;
+                                    $needRegisterBill = true;
                                     foreach ($customer->getAddresses() as $address) {
                                         $zipCodeOrder = (isset($OrderJSON->shipping->zipCode)) ? $OrderJSON->shipping->zipCode : 'Não especificado';
                                         $addressOrder = (isset($OrderJSON->shipping->address)) ? $OrderJSON->shipping->address : 'Frete não especificado.';
                                         if (($address->getData('postcode') == $zipCodeOrder) && ($address->getData('street') == $addressOrder)) {
-                                            $AddressShipBill = $address;
-                                            $needRegister = false;
-                                            break;
+                                            $AddressShipping = $address;
+                                            $needRegisterShipp = false;
+                                        }
+
+                                        $zipCodeOrder = (isset($OrderJSON->billingAddress->zipCode)) ? $OrderJSON->billingAddress->zipCode : 'Não especificado';
+                                        $addressOrder = (isset($OrderJSON->billingAddress->address)) ? $OrderJSON->billingAddress->address : 'Frete não especificado.';
+                                        if (($address->getData('postcode') == $zipCodeOrder) && ($address->getData('street') == $addressOrder)) {
+                                            $AddressBilling = $address;
+                                            $needRegisterBill = false;
                                         }
                                     }
-
-                                    //CRIA O ENDERECO CASO NAO TENHA O INFORMADO
-                                    if ($needRegister) {
+                                    // PASSAR PARA UMA FUNCAO
+                                    //CRIA O ENDERECO de SHIPPING CASO NAO TENHA O INFORMADO
+                                    if ($needRegisterShipp) {
                                         $address = Mage::getModel('customer/address');
 
                                         $addressData = array(
@@ -578,8 +591,32 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                             'telephone' => $OrderJSON->buyer->phone
                                         );
 
-                                        $address->setIsDefaultBilling(1);
+                                        $address->setIsDefaultBilling(0);
                                         $address->setIsDefaultShipping(1);
+                                        $address->addData($addressData);
+                                        $address->setPostIndex('_item1');
+                                        $customer->addAddress($address);
+                                        $customer->save();
+                                    }
+
+                                    //CRIA O ENDERECO de BILLING CASO NAO TENHA O INFORMADO
+                                    if ($needRegisterBill) {
+                                        $address = Mage::getModel('customer/address');
+
+                                        $addressData = array(
+                                            'firstname' => $firstName,
+                                            'lastname' => $lastName,
+                                            'street' => $addressFullData,
+                                            'city' => (isset($OrderJSON->billingAddress->city)) ? $OrderJSON->billingAddress->city : 'Não especificado',
+                                            'country_id' => 'BR',
+                                            'region' => (isset($OrderJSON->billingAddress->state)) ? $OrderJSON->billingAddress->state : 'Não especificado',
+                                            'region_id' => $regionID,
+                                            'postcode' => (isset($OrderJSON->billingAddress->zipCode)) ? $OrderJSON->billingAddress->zipCode : 'Não especificado',
+                                            'telephone' => $OrderJSON->buyer->phone
+                                        );
+
+                                        $address->setIsDefaultBilling(1);
+                                        $address->setIsDefaultShipping(0);
                                         $address->addData($addressData);
                                         $address->setPostIndex('_item1');
                                         $customer->addAddress($address);
@@ -600,7 +637,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                     }
                                 }
 
-                                $OrderIDMage = $this->create_order($storeID, $anymarketordersSpec, $_products, $customer, $IDOrderAnyMarket, $idSeqAnyMarket, $infoMetPag, $AddressShipBill, $AddressShipBill, $OrderJSON->freight, implode(",", $shippingDesc) );
+                                $OrderIDMage = $this->create_order($storeID, $anymarketordersSpec, $_products, $customer, $IDOrderAnyMarket, $idSeqAnyMarket, $infoMetPag, $AddressBilling, $AddressShipping, $OrderJSON->freight, implode(",", $shippingDesc) );
                                 $OrderCheck = Mage::getModel('sales/order')->loadByIncrementId($OrderIDMage);
 
                                 $this->changeFeedOrder($HOST, $headers, $idSeqAnyMarket, $tokenFeed);
@@ -1392,6 +1429,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
 
             //OBTEM OS DADOS DA ENTREGA
             $shipping = $Order->getShippingAddress();
+            $billing  = $Order->getBillingAddress();
 
             $docField = strtolower(Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_doc_type_field', $storeID));
             $docData = "";
@@ -1435,6 +1473,17 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                     "comment" =>  $shipping->getStreet(3),
                     "neighborhood" =>  $shipping->getStreet(4),
                     "zipCode" => $shipping->getPostcode()
+                ),
+                "billingAddress" => array(
+                    "city" => $billing->getCity(),
+                    "state" => $billing->getRegion(),
+                    "country" => $billing->getCountry(),
+                    "address" => $billing->getStreetFull(),
+                    "street" =>  $billing->getStreet(1),
+                    "number" =>  $billing->getStreet(2),
+                    "comment" =>  $billing->getStreet(3),
+                    "neighborhood" =>  $billing->getStreet(4),
+                    "zipCode" => $billing->getPostcode()
                 ),
                 "buyer" => array(
                     "id" => 0,
