@@ -18,6 +18,41 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
         return Mage::getModel('db1_anymarket/anymarketimage')->load( $loadedImagCtrl->getLastItem()->getData('entity_id'), 'entity_id');
     }
 
+    private function checkHashImage($allImags, $hashImage, $variation){
+        foreach($allImags as $img) {
+            $parts = parse_url($img->url);
+            parse_str($parts['query'], $query);
+            if($query['hash'] == $hashImage){
+                return true;
+            };
+        }
+        return false;
+    }
+
+    /**
+     * //obtem as imagens do produto(Config ou Simples)
+     * @param $storeID
+     * @param $varName
+     *
+     * @return boolean
+     */
+    public function checkNonVisualsVariations($storeID, $varName){
+        $customVariation = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_custom_variation_non_visual_field', $storeID);
+        if ($customVariation && $customVariation != 'a:0:{}') {
+            $customVariation = unserialize($customVariation);
+            if (is_array($customVariation)) {
+                foreach($customVariation as $customVariationRow) {
+                    $vartAM = $customVariationRow['variationTypeMagento'];
+                    if(strtoupper($vartAM) == strtoupper($varName) ){
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
     /**
      * //obtem as imagens do produto(Config ou Simples)
      * @param $storeID
@@ -55,15 +90,24 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
                     $urlImageImport = $g_image['url'];
                     $defaultImage = $product->getImage();
                     $isMain =  strpos($urlImageImport, $defaultImage) === false ? false : true;
+
+                    $contents = file_get_contents($urlImageImport);
+                    $hashImage = md5($contents);
                     if ($ArrVariationValues) {
-                        foreach ($ArrVariationValues as $value) {
+                        foreach ($ArrVariationValues as $key => $value) {
+                            if($this->checkNonVisualsVariations($storeID, $key)) {
+                                continue;
+                            }
                             if ($transformToHttp != 0) {
                                 $urlImageImport = str_replace("https", "http", $urlImageImport);
                             }
+
                             $itemsIMG[] = array(
                                 "main" => $isMain,
-                                "url" => $urlImageImport,
+                                "url" => $urlImageImport."?hash=".$hashImage,
                                 "variation" => $value,
+                                "hash" => $hashImage,
+                                "idMagento" => $g_image['value_id']
                             );
                         }
                     } else {
@@ -73,7 +117,9 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
 
                         $itemsIMG[] = array(
                             "main" => $isMain,
-                            "url" => $urlImageImport
+                            "url" => $urlImageImport."?hash=".$hashImage,
+                            "hash" => $hashImage,
+                            "idMagento" => $g_image['value_id']
                         );
                     }
 
@@ -93,15 +139,23 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
 
                         $defaultImage = $product->getImage();
                         $isMain =  strpos($_image->getFile(), $defaultImage) === false ? false : true;
+                        $contents = file_get_contents($urlImageImport);
+                        $hashImage = md5($contents);
                         if ($ArrVariationValues) {
-                            foreach ($ArrVariationValues as $value) {
+                            foreach ($ArrVariationValues as $key => $value) {
+                                if(!$this->checkNonVisualsVariations($storeID, $key)) {
+                                    continue;
+                                }
                                 if ($transformToHttp != 0) {
                                     $urlImageImport = str_replace("https", "http", $urlImageImport);
                                 }
+
                                 $itemsIMG[] = array(
                                     "main" => $isMain,
-                                    "url" => $urlImageImport,
+                                    "url" => $urlImageImport."?hash=".$hashImage,
                                     "variation" => $value,
+                                    "hash" => $hashImage,
+                                    "idMagento" => $g_image['value_id']
                                 );
                             }
                         } else {
@@ -111,7 +165,9 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
 
                             $itemsIMG[] = array(
                                 "main" => $isMain,
-                                "url" => $urlImageImport
+                                "url" => $urlImageImport."?hash=".$hashImage,
+                                "hash" => $hashImage,
+                                "idMagento" => $g_image['value_id']
                             );
                         }
 
@@ -175,17 +231,43 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
         }
     }
 
+    public function saveImagesInControl($jsonReturn, $jsonSend){
+        foreach($jsonReturn->images as $img) {
+            $idImageMagento = null;
+            $parts = parse_url($img->url);
+            parse_str($parts['query'], $query);
+            foreach($jsonSend['images'] as $imgMage){
+                if($imgMage['hash'] == $query['hash']){
+                    $idImageMagento = $imgMage['idMagento'];
+                    break;
+                }
+            }
+            if($idImageMagento) {
+                $anymarketImage = Mage::getModel('db1_anymarket/anymarketimage');
+                $anymarketImage->setValueId($idImageMagento);
+                $anymarketImage->setIdImage($img->id);
+                $anymarketImage->save();
+            }
+        }
+    }
+
     /**
      *
      * Send Image to Anymarket
      *
      * @param $storeID
      * @param $product
-     * @param $variation
+     * @param $arrVariation
      *
      * @return boolean
      */
-    public function sendImageToAnyMarket($storeID, $product, $variation){
+    public function sendImageToAnyMarket($storeID, $product, $arrVariation){
+        $variation = null;
+        $variationKey = "";
+        if($arrVariation != null){
+            $variationKey = $arrVariation[0];
+            $variation = $arrVariation[1];
+        }
         if(!$product){
             return false;
         }
@@ -351,22 +433,32 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
             }
             $returnProd['return'] = Mage::helper('db1_anymarket')->__('Product with inconsistency:').' '.$emptyFields;
             $this->saveLogsProds($storeID, "0", $returnProd, $product);
-        }else {
+        }else{
             $defaultImage = $product->getImage();
             foreach ($arrAdd as $imgAddArr) {
                 $imgAdd = $imgAddArr['URL'];
+                $contents = file_get_contents($imgAdd);
+                $hashImage = md5($contents);
 
-                $isMain =  strpos($imgAdd, $defaultImage) === false ? false : true;
+                if($this->checkHashImage($imgGetRet['return'], $hashImage, $variation)){
+                    continue;
+                }
+                $isMain = strpos($imgAdd, $defaultImage) === false ? false : true;
                 if ($variation) {
+                    if($this->checkNonVisualsVariations($storeID, $variationKey)) {
+                        continue;
+                    }
                     $JSONAdd = array(
-                        "url" => $imgAdd,
+                        "url" => $imgAdd."?hash=".$hashImage,
                         "variation" => $variation,
-                        "main" => $isMain
+                        "main" => $isMain,
+                        "hash" => $hashImage
                     );
                 } else {
                     $JSONAdd = array(
-                        "url" => $imgAdd,
-                        "main" => $isMain
+                        "url" => $imgAdd."?hash=".$hashImage,
+                        "main" => $isMain,
+                        "hash" => $hashImage
                     );
                 }
 

@@ -550,7 +550,6 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
             $anymarketlog->setStatus("1");
             $anymarketlog->setStores(array($storeID));
             $anymarketlog->save();
-
             return false;
         }
 
@@ -570,8 +569,8 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
             );
 
             if (isset($skuPut['variations'])) {
-                foreach ($skuPut['variations'] as $variationPut) {
-                    Mage::helper('db1_anymarket/image')->sendImageToAnyMarket($storeID, $prodSimple, $variationPut);
+                foreach ($skuPut['variations'] as $key => $variationPut) {
+                    Mage::helper('db1_anymarket/image')->sendImageToAnyMarket($storeID, $prodSimple, array($key, $variationPut));
                 }
                 $paramSku['variations'] = $skuPut['variations'];
             } else {
@@ -1153,6 +1152,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                     $returnProd = $this->CallAPICurl("POST", $HOST."/v2/products/", $headers, $param);
 
                     if($returnProd['error'] != '1'){
+                        Mage::helper('db1_anymarket/image')->saveImagesInControl($returnProd['return'], $param);
                         $returnProd['return'] = Mage::helper('db1_anymarket')->__('Product Created');
                     }
                     $this->saveLogsProds($storeID, "1", $returnProd, $product);
@@ -1296,14 +1296,27 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
         $ProdsJSON = $returnProdSpecific['return'];
         foreach ($ProdsJSON->skus as $sku) {
+            $transmissionReturn = $this->CallAPICurl("GET", $HOST."/v2/transmissions/".$sku->id, $headers, null);
+            if($transmissionReturn['error'] == '1') {
+                $anymarketlog = Mage::getModel('db1_anymarket/anymarketlog');
+                $anymarketlog->setLogDesc(Mage::helper('db1_anymarket')->__('Error on get Transmission for getStockProductAnyMarket.'));
+                $anymarketlog->setLogId($product->getData('sku'));
+                $anymarketlog->setStatus("0");
+                $anymarketlog->setStores(array($storeID));
+                $anymarketlog->save();
+                continue;
+            }
+
+            $transJSON = $transmissionReturn['return'];
+            $amount = $transJSON->sku[0]->amount;
             $stockItem = Mage::getModel('cataloginventory/stock_item')->loadByProduct($product);
-            $stockItem->setData('is_in_stock', $sku->amount > 0 ? '1' : '0');
-            $stockItem->setData('qty', $sku->amount);
+            $stockItem->setData('is_in_stock', $amount > 0 ? '1' : '0');
+            $stockItem->setData('qty', $amount);
             $stockItem->save();
 
             $anymarketlog = Mage::getModel('db1_anymarket/anymarketlog');
             $anymarketlog->setLogDesc(Mage::helper('db1_anymarket')->__('Imported stock SKU: ') . $product->getData('sku'));
-            $anymarketlog->setLogId($product->getId());
+            $anymarketlog->setLogId($product->getData('sku'));
             $anymarketlog->setStatus("0");
             $anymarketlog->setStores(array($storeID));
             $anymarketlog->save();
