@@ -19,11 +19,17 @@ class DB1_AnyMarket_Helper_Image extends DB1_AnyMarket_Helper_Data
     }
 
     private function checkHashImage($allImags, $hashImage, $variation){
+        if(!$variation){
+            return false;
+        }
+
         foreach($allImags as $img) {
             $parts = parse_url($img->url);
             parse_str($parts['query'], $query);
             if($query['hash'] == $hashImage){
-                return true;
+                if($img->variation == $variation){
+                    return true;
+                }
             };
         }
         return false;
