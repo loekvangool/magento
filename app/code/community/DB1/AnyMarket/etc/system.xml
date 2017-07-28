@@ -832,7 +832,7 @@
                         </anymarket_calculated_price_field>
 
                         <anymarket_header_attr_custom_variation_field>
-                            <label>Variações personalizadas</label>
+                            <label>Variações</label>
                             <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
                             <sort_order>24</sort_order>
                             <show_in_default>0</show_in_default>
@@ -841,7 +841,7 @@
                         </anymarket_header_attr_custom_variation_field>
 
                         <anymarket_custom_variation_field translate="label tooltip comment">
-                            <label>Variations</label>
+                            <label>Variações personalizadas</label>
                             <backend_model>adminhtml/system_config_backend_serialized_array</backend_model>
                             <frontend_model>db1_anymarket/system_config_source_products_variations_values</frontend_model>
                             <sort_order>25</sort_order>
@@ -851,6 +851,16 @@
                             <comment>Select the attributes that must be sent to Anymarket.</comment>
                         </anymarket_custom_variation_field>
 
+                        <anymarket_custom_variation_non_visual_field translate="label tooltip comment">
+                            <label>Variações não visuais</label>
+                            <backend_model>adminhtml/system_config_backend_serialized_array</backend_model>
+                            <frontend_model>db1_anymarket/system_config_source_products_variations_visuals_values</frontend_model>
+                            <sort_order>26</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <comment>Select the attributes that must be sent to Anymarket.</comment>
+                        </anymarket_custom_variation_non_visual_field>
 
                     </fields>
                 </anymarket_attribute_group>
@@ -1000,7 +1010,7 @@
                     <comment>
                         <![CDATA[
                             <div>
-                                <h2>v. 2.18.1</h2>
+                                <h2>v. 2.19.0</h2>
                                 <hr>
                                 <h3>Desenvolvido por<br> NovaPC - Tecnologia da Informação.</h3>
                                 <img src="http://novapc.com.br/images/logo.png" alt="NovaPC" height="100" width="150">
