@@ -205,7 +205,9 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
             "calculatedPrice" => true
         );
 
-        $anymarketcategories = Mage::getModel('db1_anymarket/anymarketcategories')->load($category->getId(), 'nmc_id_magento');
+        $anymarketcategories = Mage::getModel('db1_anymarket/anymarketcategories')
+            ->setStoreId($storeID)
+            ->load($category->getId(), 'nmc_id_magento');
         if( $anymarketcategories->getData('nmc_cat_id') == '' ){
 
             $parentID = $category->getParentId();
