@@ -393,7 +393,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
      */
     function create_simple_product($storeID, $data){
         $productGenerator = Mage::helper('db1_anymarket/productgenerator');
-        $product = $productGenerator->createSimpleProduct($data);
+        $product = $productGenerator->createSimpleProduct($storeID, $data);
 
         if(!$product){
             $returnProd['return'] = Mage::helper('db1_anymarket')->__('Simple product Created').' ('.$product->getId().')';
@@ -445,11 +445,12 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
     /**
      * update image for specific product
      *
+     * @param $storeID
      * @param $Prod
      * @param $ProdsJSON
      * @param $idClient
      */
-    public function update_image_product($Prod, $ProdsJSON, $idClient){
+    public function update_image_product($storeID, $Prod, $ProdsJSON, $idClient){
         $arrSku = $ProdsJSON->skus;
         $variation = array();
         foreach ($arrSku as $skuImg) {
@@ -514,7 +515,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
             $dataImgs = array('images' => $imagesGallery, 'sku' => $idClient);
             $productGenerator = Mage::helper('db1_anymarket/productgenerator');
-            $productGenerator->updateImages($Prod, $dataImgs);
+            $productGenerator->updateImages($storeID, $Prod, $dataImgs);
         }
     }
 
@@ -1822,7 +1823,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                         $product->setUrlKey(false);
 
                         //Atualiza Imagens
-                        $this->update_image_product($product, $ProdsJSON, $IDSKUProd);
+                        $this->update_image_product($storeID, $product, $ProdsJSON, $IDSKUProd);
 
                         $webSiteIds = $product->getWebsiteIds();
                         if(!in_array($websiteID, $webSiteIds)){
@@ -2013,7 +2014,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                 $product->setUrlKey(false);
 
                 //Atualiza Imagens
-                $this->update_image_product($product, $ProdsJSON, $IDSkuJsonProd);
+                $this->update_image_product($storeID, $product, $ProdsJSON, $IDSkuJsonProd);
 
                 $webSiteIds = $product->getWebsiteIds();
                 if(!in_array($websiteID, $webSiteIds)){

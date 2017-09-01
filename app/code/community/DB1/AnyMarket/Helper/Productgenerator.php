@@ -74,13 +74,14 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
     /**
      * update images in MG
      *
+     * @param $storeID
      * @param $product
      * @param $data
      */
-    public function updateImages($product, $data){
+    public function updateImages($storeID, $product, $data){
         $sku = $data['sku'];
         foreach ($data['images'] as $image) {
-            $this->importImages($product, $image, $sku);
+            $this->importImages($storeID, $product, $image, $sku);
         }
     }
 
@@ -88,10 +89,11 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
     /**
      * create simple prod in MG
      *
+     * @param $storeID
      * @param array $data
      * @return Mage_Catalog_Model_Product
      */
-    public function createSimpleProduct($data = array()){
+    public function createSimpleProduct($storeID, $data = array()){
         $data = array_replace_recursive($this->_defaultData, $data);
 
         $product = Mage::getModel('catalog/product');
@@ -104,7 +106,7 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
 
         if( array_key_exists("images", $data) ){
             foreach ($data['images'] as $image) {
-                $this->importImages($prodSaved, $image, $sku);
+                $this->importImages($storeID, $prodSaved, $image, $sku);
             }
         }
 
@@ -114,11 +116,12 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
     /**
      * import Images
      *
+     * @param $storeID
      * @param $product
      * @param $image
      * @param $sku
      */
-    private function importImages($product, $image, $sku){
+    private function importImages($storeID, $product, $image, $sku){
         try{
             $image_url = $image['img'];
             $image_url  = str_replace("https://", "http://", $image_url);
@@ -172,10 +175,12 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
                 $productMG->save();
                 Mage::app()->setCurrentStore( $this->getCurrentStoreView() );
             }else{
+                Mage::helper('db1_anymarket/queue')->addQueue($storeID, $product->getId(), 'IMP', 'PRODUCT');
                 Mage::log('ERROR ON CREATE IMAGE FILE '.$sku.' IMAGE '.$image_url, null, 'anymarket_dlog.log');
             }
         } catch (Exception $e) {
             Mage::log('TRY CATCH ERROR ON CREATE IMAGE FILE '.$sku.' IMAGE '.$image_url, null, 'anymarket_dlog.log');
+            Mage::helper('db1_anymarket/queue')->addQueue($storeID, $product->getId(), 'IMP', 'PRODUCT');
             Mage::log($e->getMessage(), null, 'anymarket_dlog.log');
         }
 
@@ -265,7 +270,7 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
         $confProduct->save();
         $sku = $dataProdConfig['sku'];
         foreach ($dataProdConfig['images'] as $image) {
-            $this->importImages($confProduct, $image, $sku);
+            $this->importImages($storeID, $confProduct, $image, $sku);
         }
 
         return $this->updateConfigurableProduct($storeID, $confProduct->getId(), $dataProdConfig, $simpleProductIds);
