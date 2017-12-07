@@ -1803,7 +1803,9 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                         }
 
                         foreach ($ProdsJSON->attributes as $attrProd) {
-                            $dataPrd[strtolower($attrProd->name)] = $this->procAttrConfig(strtolower($attrProd->name), $attrProd->value, 0);
+                            if(strtolower($attrProd->name) != 'sku') {
+                                $dataPrd[strtolower($attrProd->name)] = $this->procAttrConfig(strtolower($attrProd->name), $attrProd->value, 0);
+                            }
                         }
 
                         $dataPrdSimple = array(
