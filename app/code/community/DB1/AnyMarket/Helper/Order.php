@@ -408,6 +408,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                             $arrayTMP = array(
                                 'product' => $productLoaded->getId(),
                                 'price' => $item->unit,
+                                'discount' => $item->discount,
                                 'qty' => $item->amount,
                             );
 

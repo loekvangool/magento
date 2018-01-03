@@ -325,7 +325,7 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
         $errors = array();
         $items = array();
         foreach ($cartCandidates as $candidate) {
-            $item = $this->_productToOrderItem($candidate, $candidate->getCartQty(), $request['price']);
+            $item = $this->_productToOrderItem($candidate, $candidate->getCartQty(), $request);
             $items[] = $item;
 
             if (!$parentItem) {
@@ -362,11 +362,13 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
      *
      * @param Mage_Catalog_Model_Product $product
      * @param int $qty
-     * @param $price
+     * @param $productRequest
      * @return Mage_Sales_Model_Order_Item
      */
-    function _productToOrderItem(Mage_Catalog_Model_Product $product, $qty = 1, $price)
+    function _productToOrderItem(Mage_Catalog_Model_Product $product, $qty = 1, $productRequest)
     {
+        $price = $productRequest['price'];
+        $discount = $productRequest['discount'];
         $options = $product->getCustomOptions();
 
         $optionsByCode = array();
@@ -435,6 +437,8 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
             ->setSku($product->getSku())
             ->setPrice($finalPrice)
             ->setBasePrice($finalPrice)
+            ->setDiscountAmount($discount)
+            ->setBaseDiscountAmount($discount)
             ->setOriginalPrice( $product->getFinalPrice() )
             ->setRowTotal($rowTotal)
             ->setBaseRowTotal($rowTotal)
@@ -451,7 +455,7 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
 
             ->setProductOptions($options);
 
-        $this->_subTotal += $rowTotal;
+        $this->_subTotal += ($rowTotal - $discount);
 
         return $orderItem;
     }
