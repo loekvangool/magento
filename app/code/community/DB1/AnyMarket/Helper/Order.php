@@ -495,7 +495,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                 $AddressShipping = null;
 
                                 $firstName = $OrderJSON->buyer->name;
-                                $lastName = 'Lastname';
+                                $lastName = '.';
                                 if ($firstName != '') {
                                     $nameComplete = explode(" ", $firstName);
 
@@ -503,7 +503,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                     $lastNameImp = implode(" ", $lastNameP);
 
                                     $firstName = array_shift($nameComplete);
-                                    $lastName = $lastNameImp == '' ? 'Lastname' : $lastNameImp;
+                                    $lastName = $lastNameImp == '' ? '.' : $lastNameImp;
                                 }
 
                                 $region = $this->getStateNormalized($OrderJSON);
@@ -1672,7 +1672,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
         $regionCollection = Mage::getModel('directory/region')->getCollection();
         $regionNameAcro = (isset($OrderJSON->shipping->state)) ? $OrderJSON->shipping->state : 'Não especificado';
         $regionName = (isset($OrderJSON->shipping->stateNameNormalized)) ? $OrderJSON->shipping->stateNameNormalized : 'Não especificado';
-        $region = array('id' => 0, 'name' => 'Não especificado');
+        $region = array('id' => 0, 'name' => $regionName);
         foreach ($regionCollection as $key) {
             if ($key->getData('name') == $regionName || $key->getData('name') == $regionNameAcro) {
                 return array('id' => $key->getData('region_id'), 'name' => $key->getData('name'));
