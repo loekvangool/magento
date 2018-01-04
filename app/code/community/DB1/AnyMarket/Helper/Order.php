@@ -573,7 +573,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $addressData = array(
                                             'firstname' => $firstName,
                                             'lastname' => $lastName,
-                                            'street' => $addressFullData,
+                                            'street' => (isset($OrderJSON->shipping->address)) ? $OrderJSON->shipping->address : $OrderJSON->shipping->street,
                                             'city' => (isset($OrderJSON->shipping->city)) ? $OrderJSON->shipping->city : 'Não especificado',
                                             'country_id' => 'BR',
                                             'region' => $region['name'],
@@ -587,7 +587,6 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $address->addData($addressData);
                                         $address->setPostIndex('_item1');
                                         $customer->addAddress($address);
-                                        $customer->save();
                                     }
 
                                     //CRIA O ENDERECO de BILLING CASO NAO TENHA O INFORMADO
@@ -597,7 +596,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $addressData = array(
                                             'firstname' => $firstName,
                                             'lastname' => $lastName,
-                                            'street' => $addressFullData,
+                                            'street' => (isset($OrderJSON->billingAddress->address)) ? $OrderJSON->billingAddress->address : $OrderJSON->billingAddress->street,
                                             'city' => (isset($OrderJSON->billingAddress->city)) ? $OrderJSON->billingAddress->city : 'Não especificado',
                                             'country_id' => 'BR',
                                             'region' => $region['name'],
@@ -609,11 +608,10 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $address->setIsDefaultBilling(1);
                                         $address->setIsDefaultShipping(0);
                                         $address->addData($addressData);
-                                        $address->setPostIndex('_item1');
+                                        $address->setPostIndex('_item2');
                                         $customer->addAddress($address);
-                                        $customer->save();
                                     }
-
+                                    $customer->save();
                                 }
 
                                 $infoMetPag = 'ANYMARKET';
