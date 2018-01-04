@@ -534,6 +534,21 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                                 'region' => $region['name'],
                                                 'postcode' => (isset($OrderJSON->shipping->zipCode)) ? $OrderJSON->shipping->zipCode : 'Não especificado',
                                                 'telephone' => $OrderJSON->buyer->phone,
+                                                'is_default_billing' => '0',
+                                                'is_default_shipping' => '1'
+                                            ),
+                                            '_item2' => array(
+                                                'firstname' => $firstName,
+                                                'lastname' => $lastName,
+                                                'street' => (isset($OrderJSON->billingAddress->address)) ? $OrderJSON->billingAddress->address : $OrderJSON->billingAddress->street,
+                                                'city' => (isset($OrderJSON->billingAddress->city)) ? $OrderJSON->billingAddress->city : 'Não especificado',
+                                                'country_id' => 'BR',
+                                                'region_id' => $region['id'],
+                                                'region' => $region['name'],
+                                                'postcode' => (isset($OrderJSON->billingAddress->zipCode)) ? $OrderJSON->billingAddress->zipCode : 'Não especificado',
+                                                'telephone' => $OrderJSON->buyer->phone,
+                                                'is_default_billing' => '1',
+                                                'is_default_shipping' => '0'
                                             ),
                                         ),
                                     );
@@ -573,7 +588,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $addressData = array(
                                             'firstname' => $firstName,
                                             'lastname' => $lastName,
-                                            'street' => (isset($OrderJSON->shipping->address)) ? $OrderJSON->shipping->address : $OrderJSON->shipping->street,
+                                            'street' => $addressFullData,
                                             'city' => (isset($OrderJSON->shipping->city)) ? $OrderJSON->shipping->city : 'Não especificado',
                                             'country_id' => 'BR',
                                             'region' => $region['name'],
