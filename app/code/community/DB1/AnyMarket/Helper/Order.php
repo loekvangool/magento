@@ -112,6 +112,25 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
     }
 
     /**
+     * check status in comment order
+     *
+     * @param $order
+     * @return string
+     */
+    public function canUpdateStatusInOrderByComment( $order, $statusInAnymarket ){
+        $delivedDate = null;
+        foreach ($order->getStatusHistoryCollection() as $item) {
+            $CommentCurr = $item->getComment();
+
+            $iniDelivedDate = strpos($CommentCurr, 'Status Anymarket: '.$statusInAnymarket);
+            if( $iniDelivedDate !== false ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * get estimated date from order comment
      *
      * @param $shipping
@@ -800,6 +819,10 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                 return false;
             }
 
+            if(!$this->canUpdateStatusInOrderByComment($order, $StatusPedAnyMarket)){
+                return false;
+            }
+
             $createRegPay = Mage::getStoreConfig('anymarket_section/anymarket_integration_order_group/anymarket_create_reg_pay_field', $storeID);
             $itemsarray = null;
 
@@ -870,11 +893,13 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             $order->setData('state', $stateMage);
             $order->setStatus($statusMage, true);
 
+            $orderComment = '<br>Status Anymarket: '.$StatusPedAnyMarket;
             if($stateMage == Mage_Sales_Model_Order::STATE_COMPLETE){
-                $history = $order->addStatusHistoryComment('Finalizado pelo AnyMarket.', false);
+                $orderComment = 'Finalizado pelo AnyMarket.'.$orderComment;
             }else{
-                $history = $order->addStatusHistoryComment('', false);
+                $orderComment = 'Status alterado pelo Anymarket.'.$orderComment;
             }
+            $history = $order->addStatusHistoryComment($orderComment, false);
             $history->setIsCustomerNotified(false);
 
             if($stateMage == Mage_Sales_Model_Order::STATE_CANCELED) {
