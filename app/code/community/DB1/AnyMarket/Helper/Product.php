@@ -1481,6 +1481,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                                 "variations" => $arrVarSku
                             ));
                         }
+                        $this->changeStatusTransmission($HOST, $headers, $transmissionID, 'Ativo', $transmissionToken);
                     } else if ($statusTransmission == 'PAUSED') {
                         $prodLoaded = Mage::getModel('catalog/product')->setStoreId($storeID)->loadByAttribute('sku', isset($transmission->sku->partnerId) ? $transmission->sku->partnerId : $IDProdTrans);
                         if ($prodLoaded != null) {
@@ -1639,12 +1640,8 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
                 $objVariations[ $variationArray[ $idVar ] ] = $varAttr;
             }else{
-                $anymarketlog = Mage::getModel('db1_anymarket/anymarketlog');
-                $anymarketlog->setLogDesc( 'Opção de variação sem correspondente no magento ('.$varValues->variationTypeName.') - '.$descVar );
-                $anymarketlog->setStatus("0");
-                $anymarketlog->setStores(array($storeID));
-                $anymarketlog->save();
-
+                $log = Mage::helper('db1_anymarket/log');
+                $log->generateErrorLogForTransmission($storeID, $sku->id, 'Opção de variação sem correspondente no magento ('.$varValues->variationTypeName.') - '.$descVar, '0');
                 return null;
             }
 
