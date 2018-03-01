@@ -16,8 +16,17 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
     protected $_customer = self::CUSTOMER_RANDOM;
 
     protected $_subTotal = 0;
+    protected $_discount = 0;
     protected $_order;
     public $_storeId;
+
+    /**
+     * @param $value
+     */
+    public function setDiscount($value)
+    {
+        $this->_discount = $value;
+    }
 
     /**
      * @param $value
@@ -125,10 +134,9 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
             ->setIncrementId($reservedOrderId)
             ->setStoreId($this->_storeId)
             ->setQuoteId(0)
-            ->setDiscountAmount(0)
+            ->setDiscountDescription('Anymarket')
             ->setShippingAmount((float)$this->_shippingValue)
             ->setShippingTaxAmount(0)
-            ->setBaseDiscountAmount(0)
             ->setIsVirtual(0)
             ->setBaseShippingAmount((float)$this->_shippingValue)
             ->setBaseShippingTaxAmount(0)
@@ -219,8 +227,14 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
 
         $this->_order->setPayment($orderPayment);
 
-        $qtyItems = $this->_addProducts($storeID, $products);
+        $arrItems = $this->_addProducts($storeID, $products);
+        $qtyItems = $arrItems['qty'];
         $this->_order->setTotalQtyOrdered($qtyItems);
+
+        $totDesc = (float)$arrItems['totDesc'] + $this->_discount;
+        $totDesc = $totDesc * -1;
+        $this->_order->setDiscountAmount($totDesc)
+            ->setBaseDiscountAmount($totDesc);
 
         $this->_order->setSubtotal($this->_subTotal)
             ->setBaseSubtotal($this->_subTotal)
@@ -279,7 +293,7 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
      *
      * @param $products
      *
-     * @return integer
+     * @return array
      */
     protected function _addProducts($storeID, $products)
     {
@@ -288,12 +302,14 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
         //GROUP ITENS
         $arryProdAt = $this->groupProductByID($products);
         $qtyOrdered = 0;
+        $descountOrder = 0;
         foreach ($arryProdAt as $productRequest) {
             $this->_addProduct($storeID, $productRequest);
+            $descountOrder += $productRequest['discount'];
             $qtyOrdered += $productRequest['qty'];
         }
 
-        return $qtyOrdered;
+        return array("qty" => $qtyOrdered, "totDesc" => $descountOrder);
     }
 
     /**
@@ -455,7 +471,7 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
 
             ->setProductOptions($options);
 
-        $this->_subTotal += ($rowTotal - $discount);
+        $this->_subTotal += ($rowTotal);
 
         return $orderItem;
     }
