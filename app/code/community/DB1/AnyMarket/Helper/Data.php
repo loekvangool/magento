@@ -181,6 +181,15 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
         }
     }
 
+    private function normalize_str($str){
+        $unwanted_array = array('Š'=>'S', 'š'=>'s', 'Ž'=>'Z', 'ž'=>'z', 'À'=>'A', 'Á'=>'A', 'Â'=>'A', 'Ã'=>'A', 'Ä'=>'A', 'Å'=>'A', 'Æ'=>'A', 'Ç'=>'C', 'È'=>'E', 'É'=>'E',
+            'Ê'=>'E', 'Ë'=>'E', 'Ì'=>'I', 'Í'=>'I', 'Î'=>'I', 'Ï'=>'I', 'Ñ'=>'N', 'Ò'=>'O', 'Ó'=>'O', 'Ô'=>'O', 'Õ'=>'O', 'Ö'=>'O', 'Ø'=>'O', 'Ù'=>'U',
+            'Ú'=>'U', 'Û'=>'U', 'Ü'=>'U', 'Ý'=>'Y', 'Þ'=>'B', 'ß'=>'Ss', 'à'=>'a', 'á'=>'a', 'â'=>'a', 'ã'=>'a', 'ä'=>'a', 'å'=>'a', 'æ'=>'a', 'ç'=>'c',
+            'è'=>'e', 'é'=>'e', 'ê'=>'e', 'ë'=>'e', 'ì'=>'i', 'í'=>'i', 'î'=>'i', 'ï'=>'i', 'ð'=>'o', 'ñ'=>'n', 'ò'=>'o', 'ó'=>'o', 'ô'=>'o', 'õ'=>'o',
+            'ö'=>'o', 'ø'=>'o', 'ù'=>'u', 'ú'=>'u', 'û'=>'u', 'ý'=>'y', 'þ'=>'b', 'ÿ'=>'y' );
+        return strtr( $str, $unwanted_array );
+    }
+
     /**
      * call curl
      *
@@ -191,10 +200,8 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
      * @return array|string
      */
     public function CallAPICurl($method, $url, $headers, $params){
-        $orderGenerator = Mage::helper('db1_anymarket/rate');
-        $orderGenerator->applyRateLimit();
-
         $curl = curl_init($url);
+
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
         $data_string = "";
         if ($method == "POST"){
@@ -219,8 +226,8 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
 
         if ( $status == 200 || $status == 204 || $status == 201 ) {
     			$retorno = array("error" => "0", "json" => $data_string, "return" => json_decode($curl_response));
-    	}elseif ( $status == 404 || $status == 500 || $status == 503 ) {
-    			$retorno = array("error" => "1", "json" => $data_string, "return" => json_encode($curl_response));
+    	}elseif ( $status == 404 || $status == 503 ) {
+    			$retorno = array("error" => "1", "json" => $data_string, "return" => $this->normalize_str($curl_response));
         }else{
             if($err){
                 $retorno = array("error" => "1", "json" => $data_string, "return" => 'Error Curl: '.$err );
@@ -229,26 +236,26 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
 
                 $retString = '';
                 if( isset($retJsonCurlResp->message) ){
-                    $retString = 'Message: '.utf8_encode($retJsonCurlResp->message);
+                    $retString = 'Message: '.$retJsonCurlResp->message;
                 }
 
                 if( isset($retJsonCurlResp->details) ){
-                    $retString .= '; Details: '.utf8_encode($retJsonCurlResp->details);
+                    $retString .= '; Details: '.$retJsonCurlResp->details;
                 }
 
                 if( isset($retJsonCurlResp->fieldErrors) ){
                     $retString .= '; Field Erros: (';
                     foreach ($retJsonCurlResp->fieldErrors as $error) {
                         $retString .= 'Field: '.utf8_encode($error->field);
-                        $retString .= ', Message: '.utf8_encode($error->message).';';
+                        $retString .= ', Message: '.$error->message.';';
                     }
                     $retString .= ')';
                 }
 
                 if($retString != ''){
-                    $retorno = array("error" => "1", "json" => $data_string, "return" => json_encode($retString) );
+                    $retorno = array("error" => "1", "json" => $data_string, "return" => $this->normalize_str($retString) );
                 }else{
-                    $retorno = array("error" => "1", "json" => $data_string, "return" => utf8_encode($curl_response) );
+                    $retorno = array("error" => "1", "json" => $data_string, "return" => $this->normalize_str($curl_response) );
                 }
             }
 
@@ -258,6 +265,14 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         curl_close($curl);
+
+/*
+        $anymarketlog = Mage::getModel('db1_anymarket/anymarketlog');
+        $anymarketlog->setLogDesc( 'Call(MET: '.$method.' URL: '.$url.' JSON: '.json_encode($params).')');
+        $anymarketlog->setLogJson( json_encode($retorno) );
+        $anymarketlog->setStatus("1");
+        $anymarketlog->save();
+*/
         return $retorno;
     }
 
@@ -273,13 +288,16 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
         $i = 0;
         $key_array = array();
         $var_array = array();
-
+        $var_array_hash = array();
         foreach($array as $val) {
             if( isset($val['variation']) ){
-                if (!in_array($val[$key], $key_array) || !in_array($val['variation'], $var_array) ) {
+                if ((!in_array($val[$key], $key_array) || !in_array($val['variation'], $var_array)) &&
+                    !in_array($val['hash'].$val['variation'], $var_array_hash)
+                ) {
                     $key_array[$i] = $val[$key];
                     $var_array[$i] = $val['variation'];
                     array_push($temp_array, $val);
+                    array_push($var_array_hash, $val['hash'].$val['variation']);
                 }
             }else {
                 if (!in_array($val[$key], $key_array)) {
@@ -344,7 +362,7 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
     /**
      *
      */
-    function in_array_r($needle, $haystack, $strict = false) {
+    public function in_array_r($needle, $haystack, $strict = false) {
         foreach ($haystack as $item) {
             if (($strict ? $item === $needle : $item == $needle) || (is_array($item) && $this->in_array_r($needle, $item, $strict))) {
                 return true;

@@ -205,7 +205,9 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
             "calculatedPrice" => true
         );
 
-        $anymarketcategories = Mage::getModel('db1_anymarket/anymarketcategories')->load($category->getId(), 'nmc_id_magento');
+        $anymarketcategories = Mage::getModel('db1_anymarket/anymarketcategories')
+            ->setStoreId($storeID)
+            ->load($category->getId(), 'nmc_id_magento');
         if( $anymarketcategories->getData('nmc_cat_id') == '' ){
 
             $parentID = $category->getParentId();
@@ -252,9 +254,6 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
                 return array($JSONReturn->id);
             }
         }else{
-            $amCatPar = Mage::getModel('db1_anymarket/anymarketcategories')->load($IdParent, 'nmc_id_magento');
-            $IdParent = $amCatPar->getData('nmc_cat_id');
-            $JSON["parent"] = array("id" => $IdParent);
 
             $returnCatPUT = $this->CallAPICurl("PUT", $HOST."/v2/categories/".$anymarketcategories->getNmcCatId(), $headers, $JSON);
 
@@ -418,14 +417,27 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
      *
      * @return boolean
      */
-    private function findInAnymarketByFullPath($anymarketCategories, $fullPathMagento, $currIndexFullPath){
+    private function findInAnymarketByFullPath($anymarketCategories, $fullPathMagento, $currIndexFullPath, $fullPathAnymarket){
         foreach ($anymarketCategories as $categ) {
-            if( strtolower($categ->name) == strtolower($fullPathMagento[$currIndexFullPath]) ){
-                if( $currIndexFullPath+2 > count( $fullPathMagento ) ){
+            $categAnymarket = (string)strtolower($categ->name);
+            $categMagento   = (string)strtolower($fullPathMagento[$currIndexFullPath]);
+
+            $categAnymarket = str_replace(' ', '', $categAnymarket);
+            $categMagento   = str_replace(' ', '', $categMagento);
+            if( $categMagento == $categAnymarket ){
+                array_push($fullPathAnymarket, $categ->name);
+
+                $jsonCmpMagento = json_encode($fullPathMagento);
+                $jsonCmpAnymarket = json_encode($fullPathAnymarket);
+
+                $jsonCmpMagento = str_replace(' ', '', $jsonCmpMagento);
+                $jsonCmpAnymarket = str_replace(' ', '', $jsonCmpAnymarket);
+
+                if( $jsonCmpAnymarket == $jsonCmpMagento ){
                     return isset($categ->children) ? false : $categ->id;
                 }else {
                     $currIndexFullPath += 1;
-                    $retProc = $this->findInAnymarketByFullPath($categ->children, $fullPathMagento, $currIndexFullPath);
+                    $retProc = $this->findInAnymarketByFullPath($categ->children, $fullPathMagento, $currIndexFullPath, $fullPathAnymarket);
                     return $retProc != null || $retProc == false ? $retProc : $categ->id;
                 }
             }
@@ -466,7 +478,8 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
 
         $product = Mage::getModel('catalog/product')->load($idProduct);
         $categoryCollection = $product->getCategoryCollection()
-            ->addAttributeToSelect('name');
+            ->addAttributeToSelect('name')
+            ->setOrder('path', 'ASC');
 
         $ignoredCategories = array();
         do {
@@ -475,7 +488,7 @@ class DB1_AnyMarket_Helper_Category extends DB1_AnyMarket_Helper_Data
                 return false;
             }
             array_push($ignoredCategories, $fullPathMagento[0]);
-            $compatCateg = $this->findInAnymarketByFullPath($anymarketCategories["return"], $fullPathMagento[1], 0);
+            $compatCateg = $this->findInAnymarketByFullPath($anymarketCategories["return"], $fullPathMagento[1], 0, array());
         }while(!$compatCateg);
 
         return $compatCateg;

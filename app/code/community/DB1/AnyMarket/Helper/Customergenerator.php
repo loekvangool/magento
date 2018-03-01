@@ -106,6 +106,7 @@ class DB1_AnyMarket_Helper_CustomerGenerator extends DB1_AnyMarket_Helper_Data
 
         $customer->setData($data['account']);
 
+        $addressCustomer = array();
         foreach (array_keys($data['address']) as $index) {
             $address = Mage::getModel('customer/address');
 
@@ -125,6 +126,8 @@ class DB1_AnyMarket_Helper_CustomerGenerator extends DB1_AnyMarket_Helper_Data
             $address->setPostIndex($index);
 
             $customer->addAddress($address);
+
+            array_push($addressCustomer, $address);
         }
 
         // Default billing and shipping
@@ -149,6 +152,6 @@ class DB1_AnyMarket_Helper_CustomerGenerator extends DB1_AnyMarket_Helper_Data
             ->cleanAllAddresses()
         ;
 
-        return array ("customer" => $customer, "addr" => $address  );
+        return array ("customer" => $customer, "addr" => $addressCustomer  );
     }
 }

@@ -53,6 +53,24 @@ class DB1_AnyMarket_Block_Adminhtml_Anymarketproducts_Grid extends Mage_Adminhtm
     }
 
     /**
+     * get Current Store view
+     *
+     * @access protected
+     * @return int
+     *
+     */
+    protected function _getCurrentStoreView(){
+        $storeID = $this->getRequest()->getParam('store', 0);
+        if( $storeID == null || $storeID == '0' ){
+            $storeID = Mage::app()->getDefaultStoreView()->getId();
+            if( $storeID == null ){
+                $storeID = 1;
+            }
+        }
+        return $storeID;
+    }
+
+    /**
      * prepare collection
      *
      * @access protected
@@ -70,25 +88,28 @@ class DB1_AnyMarket_Block_Adminhtml_Anymarketproducts_Grid extends Mage_Adminhtm
             ->getCollection()
             ->setOrder('entity_id','DESC');
 
-        $productIntegrate = Mage::getSingleton('eav/config')->getAttribute('catalog_product','integra_anymarket');
-        $idAttr = $productIntegrate->getId();
-        $productCategTable = Mage::getSingleton('core/resource')->getTableName('catalog/category_product');
-        $selCollection = $collection->getSelect();
+        $storeID = $this->_getCurrentStoreView();
+        $typeSincProd = Mage::getStoreConfig('anymarket_section/anymarket_integration_prod_group/anymarket_categ_enabled_sync_field', $storeID);
+        if($typeSincProd) {
+            $productIntegrate = Mage::getSingleton('eav/config')->getAttribute('catalog_product', 'integra_anymarket');
+            $idAttr = $productIntegrate->getId();
+            $productCategTable = Mage::getSingleton('core/resource')->getTableName('catalog/category_product');
+            $selCollection = $collection->getSelect();
 
-        $selCollection->joinLeft(
+            $selCollection->joinLeft(
                 array('product_category' => $productCategTable),
                 'product_category.product_id = main_table.nmp_id',
                 array('product_category.product_id')
             );
-        if( $idAttr ) {
-            $selCollection->join(
-                array('product_attribute' => $productIntegrate->getBackendTable()),
-                'product_attribute.entity_id = main_table.nmp_id AND product_attribute.attribute_id = ' . $idAttr,
-                array('product_attribute.value')
-            );
+            if ($idAttr) {
+                $selCollection->join(
+                    array('product_attribute' => $productIntegrate->getBackendTable()),
+                    'product_attribute.entity_id = main_table.nmp_id AND product_attribute.attribute_id = ' . $idAttr,
+                    array('product_attribute.value')
+                );
+            }
+            $selCollection->group('main_table.entity_id');
         }
-        $selCollection->group('main_table.entity_id');
-
         $this->setCollection($collection);
         return parent::_prepareCollection();
     }
@@ -102,6 +123,8 @@ class DB1_AnyMarket_Block_Adminhtml_Anymarketproducts_Grid extends Mage_Adminhtm
      */
     protected function _prepareColumns()
     {
+        $storeID = $this->_getCurrentStoreView();
+        $typeSincProd = Mage::getStoreConfig('anymarket_section/anymarket_integration_prod_group/anymarket_categ_enabled_sync_field', $storeID);
         $this->addColumn(
             'nmp_sku',
             array(
@@ -120,32 +143,34 @@ class DB1_AnyMarket_Block_Adminhtml_Anymarketproducts_Grid extends Mage_Adminhtm
 
             )
         );
-        $this->addColumn(
-            'category',
-            array(
-                'header' => Mage::helper('db1_anymarket')->__('Category'),
-                'index' => 'category_id',
-                'filter_index' => 'category_id',
-                'sortable'	=> false,
-    			'width' => '250px',
-				'type'  => 'options',
-                'options'	=> Mage::getSingleton('db1_anymarket/system_config_source_categories_category')->toOptionArray(),
-                'renderer'	=> 'db1_anymarket/Adminhtml_Anymarketproducts_grid_render_category'
-            )
-        );
-        if( Mage::getSingleton('eav/config')->getAttribute('catalog_product','integra_anymarket')->getId() ){
+        if($typeSincProd) {
             $this->addColumn(
-                'value',
+                'category',
                 array(
-                    'header' => Mage::helper('db1_anymarket')->__('Will be integrated'),
-                    'index' => 'value',
+                    'header' => Mage::helper('db1_anymarket')->__('Category'),
+                    'index' => 'category_id',
+                    'filter_index' => 'category_id',
+                    'sortable' => false,
+                    'width' => '250px',
                     'type' => 'options',
-                    'options' => array(
-                        '1' => Mage::helper('db1_anymarket')->__('Yes'),
-                        '0' => Mage::helper('db1_anymarket')->__('No'),
-                    )
+                    'options' => Mage::getSingleton('db1_anymarket/system_config_source_categories_category')->toOptionArray(),
+                    'renderer' => 'db1_anymarket/Adminhtml_Anymarketproducts_grid_render_category'
                 )
             );
+            if (Mage::getSingleton('eav/config')->getAttribute('catalog_product', 'integra_anymarket')->getId()) {
+                $this->addColumn(
+                    'value',
+                    array(
+                        'header' => Mage::helper('db1_anymarket')->__('Will be integrated'),
+                        'index' => 'value',
+                        'type' => 'options',
+                        'options' => array(
+                            '1' => Mage::helper('db1_anymarket')->__('Yes'),
+                            '0' => Mage::helper('db1_anymarket')->__('No'),
+                        )
+                    )
+                );
+            }
         }
         $this->addColumn(
             'nmp_status_int',
