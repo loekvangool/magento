@@ -193,38 +193,38 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
      *
      * @param $storeID
      * @param $OrderJSON
+     * @param $addType
      * @return array
      */
-    public function getCompleteAddressOrder($storeID, $OrderJSON){
+    public function getCompleteAddressOrder($storeID, $OrderJSON, $addType){
+        $OrderJSON = json_decode(json_encode($OrderJSON), true);
         $retArrStreet = array(
-            0 => "Frete não especificado.",
+            0 => "Não especificado.",
             1 => " ",
             2 => " ",
             3 => " "
         );
 
-        if( isset($OrderJSON->shipping) ) {
-            if (isset($OrderJSON->shipping->address)) {
-                $OrderJSON = json_decode(json_encode($OrderJSON), true);
-
-                $street1 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add1_field', $storeID);
-                $street2 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add2_field', $storeID);
-                $street3 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add3_field', $storeID);
-                $street4 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add4_field', $storeID);
-
-                $street1 = (isset($OrderJSON['shipping'][$street1])) ? $OrderJSON['shipping'][$street1] : $OrderJSON['shipping']['address'];
-                $street2 = (isset($OrderJSON['shipping'][$street2])) ? $OrderJSON['shipping'][$street2] : '';
-                $street3 = (isset($OrderJSON['shipping'][$street3])) ? $OrderJSON['shipping'][$street3] : '';
-                $street4 = (isset($OrderJSON['shipping'][$street4])) ? $OrderJSON['shipping'][$street4] : '';
-
-                $retArrStreet = array(
-                    0 => $street1,
-                    1 => $street2,
-                    2 => $street3,
-                    3 => $street4
-                );
-            }
+        if(!isset($OrderJSON[$addType]) || !isset($OrderJSON[$addType]['street'])){
+            return $retArrStreet;
         }
+
+        $street1 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add1_field', $storeID);
+        $street2 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add2_field', $storeID);
+        $street3 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add3_field', $storeID);
+        $street4 = Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_add4_field', $storeID);
+
+        $street1 = (isset($OrderJSON[$addType][$street1])) ? $OrderJSON[$addType][$street1] : $OrderJSON[$addType]['address'];
+        $street2 = (isset($OrderJSON[$addType][$street2])) ? $OrderJSON[$addType][$street2] : '';
+        $street3 = (isset($OrderJSON[$addType][$street3])) ? $OrderJSON[$addType][$street3] : '';
+        $street4 = (isset($OrderJSON[$addType][$street4])) ? $OrderJSON[$addType][$street4] : '';
+
+        $retArrStreet = array(
+            0 => $street1,
+            1 => $street2,
+            2 => $street3,
+            3 => $street4
+        );
 
         return $retArrStreet;
     }
@@ -268,7 +268,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
      * @param $shippValue
      * @return integer
      */
-    private function create_order($storeID, $anymarketordersSpec, $products, $customer, $IDAnyMarket, $IDSeqAnyMarket, $infoMetPag, $Billing, $Shipping, $shippValue, $ShippingDesc)
+    private function create_order($storeID, $orderJSON, $anymarketordersSpec, $products, $customer, $IDSeqAnyMarket, $infoMetPag, $Billing, $Shipping, $ShippingDesc)
     {
         if( ($anymarketordersSpec->getData('nmo_id_anymarket') == null) ||
             ($anymarketordersSpec->getData('nmo_status_int') == "Não integrado (AnyMarket)") ||
@@ -278,6 +278,10 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             $orderGenerator = Mage::helper('db1_anymarket/ordergenerator');
             $orderGenerator->_storeId = $storeID;
 
+            $shippValue  = $orderJSON->freight;
+            $idAnyMarket = $orderJSON->marketPlaceId;
+            $discount = $orderJSON->discount;
+
             $orderGenerator->setShippingMethod('freeshipping_freeshipping');
             $orderGenerator->setPaymentMethod('db1_anymarket');
             $orderGenerator->setAdditionalInformation($infoMetPag);
@@ -285,15 +289,16 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             $orderGenerator->setShipAddress($Shipping);
             $orderGenerator->setBillAddress($Billing);
             $orderGenerator->setCustomer($customer);
+            $orderGenerator->setDiscount($discount);
             $orderGenerator->setCpfCnpj($customer->getData($AttrToDoc));
             $orderGenerator->setShippingDescription($ShippingDesc);
 
             $CodOrder = $orderGenerator->createOrder($storeID, $products);
 
-            $this->saveLogOrder('nmo_id_anymarket', $IDAnyMarket, 'Integrado', '', $IDSeqAnyMarket, $IDAnyMarket, $CodOrder, $storeID);
+            $this->saveLogOrder('nmo_id_anymarket', $idAnyMarket, 'Integrado', '', $IDSeqAnyMarket, $idAnyMarket, $CodOrder, $storeID);
 
             $anymarketlog = Mage::getModel('db1_anymarket/anymarketlog');
-            $anymarketlog->setLogDesc('Order Created: ' . $CodOrder . ' ID Anymarket: ' . $IDAnyMarket);
+            $anymarketlog->setLogDesc('Order Created: ' . $CodOrder . ' ID Anymarket: ' . $idAnyMarket);
             $anymarketlog->setStatus("0");
             $anymarketlog->setStores(array($storeID));
             $anymarketlog->save();
@@ -525,9 +530,11 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                     $lastName = $lastNameImp == '' ? '.' : $lastNameImp;
                                 }
 
-                                $region = $this->getStateNormalized($OrderJSON);
+                                $shippingRegion = $this->getStateNormalized($OrderJSON, "shipping");
+                                $billingRegion = $this->getStateNormalized($OrderJSON, "billingAddress");
 
-                                $addressFullData = $this->getCompleteAddressOrder($storeID, $OrderJSON);
+                                $addressShippingFullData = $this->getCompleteAddressOrder($storeID, $OrderJSON, "shipping");
+                                $addressBillingFullData = $this->getCompleteAddressOrder($storeID, $OrderJSON, "billingAddress");
                                 if ($customer->getId() == null) {
                                     $_DataCustomer = array(
                                         'account' => array(
@@ -546,11 +553,11 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                             '_item1' => array(
                                                 'firstname' => $firstName,
                                                 'lastname' => $lastName,
-                                                'street' => $addressFullData,
+                                                'street' => $addressShippingFullData,
                                                 'city' => (isset($OrderJSON->shipping->city)) ? $OrderJSON->shipping->city : 'Não especificado',
-                                                'country_id' => 'BR',
-                                                'region_id' => $region['id'],
-                                                'region' => $region['name'],
+                                                'country_id' => $OrderJSON->shipping->countryAcronymNormalized,
+                                                'region_id' => $shippingRegion['id'],
+                                                'region' => $shippingRegion['name'],
                                                 'postcode' => (isset($OrderJSON->shipping->zipCode)) ? $OrderJSON->shipping->zipCode : 'Não especificado',
                                                 'telephone' => $OrderJSON->buyer->phone,
                                                 'is_default_billing' => '0',
@@ -559,11 +566,11 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                             '_item2' => array(
                                                 'firstname' => $firstName,
                                                 'lastname' => $lastName,
-                                                'street' => (isset($OrderJSON->billingAddress->address)) ? $OrderJSON->billingAddress->address : $OrderJSON->billingAddress->street,
+                                                'street' => $addressBillingFullData,
                                                 'city' => (isset($OrderJSON->billingAddress->city)) ? $OrderJSON->billingAddress->city : 'Não especificado',
-                                                'country_id' => 'BR',
-                                                'region_id' => $region['id'],
-                                                'region' => $region['name'],
+                                                'country_id' => $OrderJSON->billingAddress->countryAcronymNormalized,
+                                                'region_id' => $billingRegion['id'],
+                                                'region' => $billingRegion['name'],
                                                 'postcode' => (isset($OrderJSON->billingAddress->zipCode)) ? $OrderJSON->billingAddress->zipCode : 'Não especificado',
                                                 'telephone' => $OrderJSON->buyer->phone,
                                                 'is_default_billing' => '1',
@@ -607,11 +614,11 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $addressData = array(
                                             'firstname' => $firstName,
                                             'lastname' => $lastName,
-                                            'street' => $addressFullData,
+                                            'street' => $addressShippingFullData,
                                             'city' => (isset($OrderJSON->shipping->city)) ? $OrderJSON->shipping->city : 'Não especificado',
                                             'country_id' => 'BR',
-                                            'region' => $region['name'],
-                                            'region_id' => $region['id'],
+                                            'region' => $shippingRegion['name'],
+                                            'region_id' => $shippingRegion['id'],
                                             'postcode' => (isset($OrderJSON->shipping->zipCode)) ? $OrderJSON->shipping->zipCode : 'Não especificado',
                                             'telephone' => $OrderJSON->buyer->phone
                                         );
@@ -630,11 +637,11 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                         $addressData = array(
                                             'firstname' => $firstName,
                                             'lastname' => $lastName,
-                                            'street' => (isset($OrderJSON->billingAddress->address)) ? $OrderJSON->billingAddress->address : $OrderJSON->billingAddress->street,
+                                            'street' => $addressBillingFullData,
                                             'city' => (isset($OrderJSON->billingAddress->city)) ? $OrderJSON->billingAddress->city : 'Não especificado',
                                             'country_id' => 'BR',
-                                            'region' => $region['name'],
-                                            'region_id' => $region['id'],
+                                            'region' => $billingRegion['name'],
+                                            'region_id' => $billingRegion['id'],
                                             'postcode' => (isset($OrderJSON->billingAddress->zipCode)) ? $OrderJSON->billingAddress->zipCode : 'Não especificado',
                                             'telephone' => $OrderJSON->buyer->phone
                                         );
@@ -660,7 +667,9 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                                     }
                                 }
 
-                                $OrderIDMage = $this->create_order($storeID, $anymarketordersSpec, $_products, $customer, $IDOrderAnyMarket, $idSeqAnyMarket, $infoMetPag, $AddressBilling, $AddressShipping, $OrderJSON->freight, implode(",", $shippingDesc) );
+                                $OrderIDMage = $this->create_order($storeID, $OrderJSON, $anymarketordersSpec, $_products, $customer,
+                                    $idSeqAnyMarket, $infoMetPag, $AddressBilling, $AddressShipping,
+                                    implode(",", $shippingDesc) );
                                 $OrderCheck = Mage::getModel('sales/order')->loadByIncrementId($OrderIDMage);
 
                                 $this->changeFeedOrder($HOST, $headers, $idSeqAnyMarket, $tokenFeed);
@@ -1704,12 +1713,15 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
 
     /**
      * @param $OrderJSON
+     * @param $addType
      * @return array
      */
-    public function getStateNormalized($OrderJSON) {
+    public function getStateNormalized($OrderJSON, $addType) {
+        $OrderJSON = json_decode(json_encode($OrderJSON), true);
+
         $regionCollection = Mage::getModel('directory/region')->getCollection();
-        $regionNameAcro = (isset($OrderJSON->shipping->state)) ? $OrderJSON->shipping->state : 'Não especificado';
-        $regionName = (isset($OrderJSON->shipping->stateNameNormalized)) ? $OrderJSON->shipping->stateNameNormalized : 'Não especificado';
+        $regionNameAcro = (isset($OrderJSON[$addType]['state'])) ? $OrderJSON[$addType]['state'] : 'Não especificado';
+        $regionName = (isset($OrderJSON[$addType]['stateNameNormalized'])) ? $OrderJSON[$addType]['stateNameNormalized'] : 'Não especificado';
         $region = array('id' => 0, 'name' => $regionName);
         foreach ($regionCollection as $key) {
             if ($key->getData('name') == $regionName || $key->getData('name') == $regionNameAcro) {

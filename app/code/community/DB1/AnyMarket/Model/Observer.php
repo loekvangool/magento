@@ -266,17 +266,33 @@ class DB1_AnyMarket_Model_Observer {
             $event = $observer->getEvent();
             $_item = $event->getItem();
 
-			$storeID = ($_item->getData('store_id') != null && $_item->getData('store_id') != "0") ? $_item->getData('store_id') : Mage::app()->getDefaultStoreView()->getId();
-            if( $this->asyncMode($storeID) ){
-                Mage::helper('db1_anymarket/queue')->addQueue($storeID, $_item->getProductId(), 'EXP', 'STOCK');
-                return false;
+			if ($_item->getData('store_id') != null && $_item->getData('store_id') != "0") {
+                $this->processStockUpdate($_item->getData('store_id'), $_item);
+    	    }else{
+                $product = Mage::getModel('catalog/product')->load($_item->getProductId());
+                foreach($product->getStoreIds() as $idStoreView) {
+                    $this->processStockUpdate($idStoreView, $_item);
+                }
             }
+        }
+    }
 
-            $product = Mage::getModel('catalog/product')->load( $_item->getProductId() );
-            if ( $product->getId() ) {
-                $filter = strtolower(Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_preco_field', $storeID));
-                Mage::helper('db1_anymarket/product')->updatePriceStockAnyMarket($storeID, $_item->getProductId(), $_item->getQty(), $product->getData($filter));
-            }
+    /**
+     * @param $storeID
+     * @param $_item
+     * @return bool
+     */
+    private function processStockUpdate($storeID, $_item)
+    {
+        if ($this->asyncMode($storeID)) {
+            Mage::helper('db1_anymarket/queue')->addQueue($storeID, $_item->getProductId(), 'EXP', 'STOCK');
+            return false;
+        }
+
+        $product = Mage::getModel('catalog/product')->load($_item->getProductId());
+        if ($product->getId()) {
+            $filter = strtolower(Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_preco_field', $storeID));
+            Mage::helper('db1_anymarket/product')->updatePriceStockAnyMarket($storeID, $_item->getProductId(), $_item->getQty(), $product->getData($filter));
         }
     }
 
@@ -406,8 +422,5 @@ class DB1_AnyMarket_Model_Observer {
 
 
     }
-
-
-
 }
 ?>
