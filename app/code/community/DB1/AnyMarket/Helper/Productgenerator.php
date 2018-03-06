@@ -210,6 +210,7 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
     /**
      * create configurable product in MG
      *
+     * @param $storeID
      * @param array $dataProdConfig
      * @param array $simpleProducts
      * @param array $AttributeIds
@@ -218,7 +219,7 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
     public function createConfigurableProduct($storeID, $dataProdConfig = array() , $simpleProducts = array(), $AttributeIds = array()){
         $confProduct = Mage::getModel('catalog/product')->setSku($dataProdConfig['sku']);
         $confProduct->setTypeId('configurable');
-        $confProduct->setWebsiteIds(array(1));
+        $confProduct->setWebsiteIds(array(Mage::getModel('core/store')->load($storeID)->getWebsiteId()));
         $confProduct->getTypeInstance()->setUsedProductAttributeIds($AttributeIds);
 
         $configurableProductsData = array();
@@ -286,6 +287,7 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
      * @return Mage_Catalog_Model_Product
      */
     public function updateConfigurableProduct($storeID, $idProd, $dataProdConfig = array() , $simpleProductIds = array()){
+        Mage::app()->setCurrentStore(Mage_Core_Model_App::ADMIN_STORE_ID);
         $mainProduct = Mage::getModel('catalog/product')->load( $idProd );
 
         $childProducts = Mage::getModel('catalog/product_type_configurable')
@@ -344,6 +346,10 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
             $confProduct->setData($key, $value);
         }
 
+        $websiteIds = $confProduct->getWebsiteIds();
+        array_push($websiteIds, Mage::getModel('core/store')->load($storeID)->getWebsiteId());
+
+        $confProduct->setWebsiteIds($websiteIds);
         $confProduct->save();
 
         return $confProduct;

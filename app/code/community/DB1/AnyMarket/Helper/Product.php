@@ -1764,6 +1764,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                         $dataPrd = array(
                             'attribute_set_id' => $AttrSet == null ? Mage::getModel('catalog/product')->getDefaultAttributeSetId() : $AttrSet,
                             'type_id' => 'simple',
+                            'visibility' => 1,
                             'sku' => $IDSKUProd,
                             'name' => $sku->title,
                             'description' => $sku->title,
