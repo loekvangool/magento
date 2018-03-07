@@ -1656,19 +1656,30 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
     /**
      * @param $storeID
-     * @param $collectionConfigurable
      * @param $ProdsJSON
      * @return Object
      */
-    private function getConfigProdByIdAnymarket($storeID, $collectionConfigurable, $ProdsJSON){
-        foreach ($collectionConfigurable as $prodConfig) {
-            $prodTmp = Mage::getModel('catalog/product')->load( $prodConfig->getId() );
-            $childProducts = Mage::getModel('catalog/product_type_configurable')->getUsedProducts(null, $prodTmp);
-            foreach ($childProducts as $prodChild) {
-                $idAnymarket = $this->getIdInAnymarketBySku($storeID, $prodChild);
-                if( $idAnymarket == $ProdsJSON->id ){
-                    return $prodTmp;
-                }
+    private function getConfigProdByIdAnymarket($storeID, $ProdsJSON){
+        $HOST  = Mage::getStoreConfig('anymarket_section/anymarket_acesso_group/anymarket_host_field', $storeID);
+        $TOKEN = Mage::getStoreConfig('anymarket_section/anymarket_acesso_group/anymarket_token_field', $storeID);
+
+        $headers = array(
+            "Content-type: application/json",
+            "Accept: */*",
+            "gumgaToken: ".$TOKEN
+        );
+
+        $prodAnymarket = $this->CallAPICurl("GET", $HOST . "/v2/products/" . $ProdsJSON->id, $headers, null);
+        $ProdCompleteJSON = $prodAnymarket['return'];
+        foreach ($ProdCompleteJSON->skus as $sku) {
+            $loadedProd = Mage::getModel('catalog/product')->loadByAttribute('sku', $sku->partnerId);
+            if ($loadedProd == null) {
+                continue;
+            }
+            $parentIds = Mage::getResourceSingleton('catalog/product_type_configurable')->getParentIdsByChild( $loadedProd->getId() );
+            if (isset($parentIds[0])) {
+                $confID = $parentIds[0];
+                return Mage::getModel('catalog/product')->load($confID);
             }
         }
         return null;
@@ -1764,6 +1775,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                         $dataPrd = array(
                             'attribute_set_id' => $AttrSet == null ? Mage::getModel('catalog/product')->getDefaultAttributeSetId() : $AttrSet,
                             'type_id' => 'simple',
+                            'visibility' => 1,
                             'sku' => $IDSKUProd,
                             'name' => $sku->title,
                             'description' => $sku->title,
@@ -1886,10 +1898,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                     }
                 }
 
-                $collectionConfigurable = Mage::getResourceModel('catalog/product_collection')
-                    ->addAttributeToFilter('type_id', array('eq' => 'configurable'));
-
-                $prod = $this->getConfigProdByIdAnymarket($storeID, $collectionConfigurable, $ProdsJSON);
+                $prod = $this->getConfigProdByIdAnymarket($storeID, $ProdsJSON);
                 $imagesGallery = array();
                 foreach ($ProdsJSON->photos as $image) {
                     $imagesGallery[] = array('img' => $image->standard_resolution, 'main' => $image->main);
