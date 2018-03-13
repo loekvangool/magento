@@ -232,14 +232,16 @@ class DB1_AnyMarket_Helper_OrderGenerator extends DB1_AnyMarket_Helper_Data
         $this->_order->setTotalQtyOrdered($qtyItems);
 
         $totDesc = (float)$arrItems['totDesc'] + $this->_discount;
+        $grandTotal = ((float)$this->_subTotal+(float)$this->_shippingValue)-(float)$totDesc;
         $totDesc = $totDesc * -1;
+
         $this->_order->setDiscountAmount($totDesc)
             ->setBaseDiscountAmount($totDesc);
 
         $this->_order->setSubtotal($this->_subTotal)
             ->setBaseSubtotal($this->_subTotal)
-            ->setGrandTotal( (float)$this->_subTotal+(float)$this->_shippingValue )
-            ->setBaseGrandTotal($this->_subTotal);
+            ->setGrandTotal($grandTotal)
+            ->setBaseGrandTotal($grandTotal);
 
         $transaction->addObject($this->_order);
         $transaction->addCommitCallback(array($this->_order, 'place'));
