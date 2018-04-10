@@ -200,6 +200,8 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
      * @return array|string
      */
     public function CallAPICurl($method, $url, $headers, $params){
+        $orderGenerator = Mage::helper('db1_anymarket/rate');
+        $orderGenerator->applyRateLimit();
         $curl = curl_init($url);
 
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
@@ -265,14 +267,6 @@ class DB1_AnyMarket_Helper_Data extends Mage_Core_Helper_Abstract
         }
 
         curl_close($curl);
-
-/*
-        $anymarketlog = Mage::getModel('db1_anymarket/anymarketlog');
-        $anymarketlog->setLogDesc( 'Call(MET: '.$method.' URL: '.$url.' JSON: '.json_encode($params).')');
-        $anymarketlog->setLogJson( json_encode($retorno) );
-        $anymarketlog->setStatus("1");
-        $anymarketlog->save();
-*/
         return $retorno;
     }
 
