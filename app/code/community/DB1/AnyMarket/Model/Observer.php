@@ -201,6 +201,11 @@ class DB1_AnyMarket_Model_Observer {
      */
     private function prepareOrderForProc($storeID, $typeProc, $order, $OrderID){
         try {
+            $OI = Mage::getStoreConfig('anymarket_section/anymarket_acesso_group/anymarket_oi_field', $storeID);
+            if($OI == null || $OI == ''){
+                return $this;
+            }
+
             if(Mage::registry('order_save_observer_executed_'.$OrderID )){
                 Mage::unregister( 'order_save_observer_executed_'.$OrderID );
                 return $this;
