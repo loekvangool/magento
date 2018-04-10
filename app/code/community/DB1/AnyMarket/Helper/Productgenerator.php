@@ -173,6 +173,12 @@ class DB1_AnyMarket_Helper_ProductGenerator extends DB1_AnyMarket_Helper_Data
                 $productMG = Mage::getModel('catalog/product')->loadByAttribute('sku', $product->getSku());
                 $productMG->addImageToMediaGallery( $filepath, $attrIMG, false, false);
                 $productMG->save();
+
+                $productMG->setStoreId($storeID)
+                    ->setImage(false)
+                    ->setSmallImage(false)
+                    ->setThumbnail(false)
+                    ->save();
                 Mage::app()->setCurrentStore( $this->getCurrentStoreView() );
             }else{
                 Mage::helper('db1_anymarket/queue')->addQueue($storeID, $product->getId(), 'IMP', 'PRODUCT');

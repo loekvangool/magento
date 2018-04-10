@@ -1925,7 +1925,8 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                 }else{
                     $dataProdConfig = array(
                         'stock' => '0',
-                        'price' => '0',
+                        $priceField => $ProdsJSON->skus[0]->price,
+                        "specialPrice" => $ProdsJSON->skus[0]->specialPrice,
                         'name' => $ProdsJSON->title,
                         'brand' => '',
                         'sku' => $ProdsJSON->id,
