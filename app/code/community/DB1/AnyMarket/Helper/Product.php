@@ -1778,7 +1778,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                             'visibility' => 1,
                             'sku' => $IDSKUProd,
                             'name' => $sku->title,
-                            'description' => $sku->title,
+                            'description' => $sku->$ProdsJSON->description,
                             'short_description' => $sku->title,
                             $priceField => $sku->price,
                             'special_price' => $sku->specialPrice,
@@ -1844,7 +1844,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
                         $product->setStoreId($storeID);
                         $product->setName( $sku->title );
-                        $product->setDescription( $sku->title );
+                        $product->setDescription( $sku->$ProdsJSON->description );
                         $product->setShortDescription( $sku->title );
                         $product->setData('weight', $MassUnit == 1 ? $ProdsJSON->weight*1000 : $ProdsJSON->weight);
 
