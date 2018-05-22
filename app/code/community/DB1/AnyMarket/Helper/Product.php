@@ -819,6 +819,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
 
         $price_factor =       Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_price_factor_field', $storeID);
         $calculated_price =   Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_calculated_price_field', $storeID);
+        $gender           =   Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_gender_field', $storeID);
 
         $HOST  = Mage::getStoreConfig('anymarket_section/anymarket_acesso_group/anymarket_host_field', $storeID);
         $TOKEN = Mage::getStoreConfig('anymarket_section/anymarket_acesso_group/anymarket_token_field', $storeID);
@@ -1122,6 +1123,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                 "priceFactor" => $varPriceFactor,
                 "calculatedPrice" => $product->getData( $calculated_price ) == 0 ? false : true,
                 "characteristics" => $ArrAttributes,
+                "gender" => $this->procAttrConfig($gender, $product->getData( $gender ), 1),
                 "skus" => $ArrSimpleConfigProd,
             );
 
@@ -1728,6 +1730,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
         $ean =                Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_ean_field', $storeID);
         $warranty_text =      Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_warranty_text_field', $storeID);
         $warranty_time =      Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_warranty_time_field', $storeID);
+        $gender        =      Mage::getStoreConfig('anymarket_section/anymarket_attribute_group/anymarket_gender_field', $storeID);
 
         $configureFieldsConfig = $this->getFieldsDescriptionConfig($storeID);
 
@@ -1798,6 +1801,7 @@ class DB1_AnyMarket_Helper_Product extends DB1_AnyMarket_Helper_Data
                             $volume_largura => $this->convertUnitMeasurement($UnitMeasurement, $vWidth, 0),
 
                             $warranty_time => $this->procAttrConfig($warranty_time, $ProdsJSON->warrantyTime, 0),
+                            $gender => $this->procAttrConfig($gender, $ProdsJSON->gender, 0),
                             $nbm => $this->procAttrConfig($nbm, $ProdsJSON->nbm, 0),
                             $nbm_origin => $this->procAttrConfig($nbm_origin, $ProdsJSON->originCode, 0),
                             $ean => $this->procAttrConfig($ean, $sku->ean, 0),
