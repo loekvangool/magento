@@ -205,6 +205,11 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             3 => " "
         );
 
+        //TRATAMENTO PARA QUANDO NAO EXISTER O BILLING ADDRESS
+        if(!isset($OrderJSON[$addType]) && $addType == "billingAddress"){
+            $addType = "shipping";
+        }
+
         if(!isset($OrderJSON[$addType]) || !isset($OrderJSON[$addType]['street'])){
             return $retArrStreet;
         }
