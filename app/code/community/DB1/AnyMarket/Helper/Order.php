@@ -97,9 +97,14 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
      * @param $Order
      * @return string
      */
-    public function getDeliveredDateFromOrder( $Order ){
+    public function getDeliveredDateFromOrder($Order, $statuAM){
         $delivedDate = null;
+        $deliveredDateAlt = null;
         foreach ($Order->getStatusHistoryCollection() as $item) {
+            if($statuAM == "CONCLUDED" &&  $item->getStatus() == $Order->getStatus() ){
+                $deliveredDateAlt = $this->formatDateTimeZone( str_replace("/", "-", $item->getCreatedAt()));
+            }
+
             $CommentCurr = strtolower($item->getComment());
 
             $iniDelivedDate = strpos($CommentCurr, 'data de entrega:');
@@ -108,7 +113,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                 break;
             }
         }
-        return $delivedDate;
+        return $delivedDate == null ? $deliveredDateAlt : $delivedDate;
     }
 
     /**
@@ -1259,9 +1264,10 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
      * get tracking order
      *
      * @param $Order
+     * @param $statuAM
      * @return array
      */
-    public function getTrackingOrder($Order){
+    public function getTrackingOrder($Order, $statuAM){
         $TrackNum = '';
         $TrackTitle = '';
         $TrackCreate = '';
@@ -1297,7 +1303,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             }
         }
 
-        $deliveredDate = $this->getDeliveredDateFromOrder( $Order );
+        $deliveredDate = $this->getDeliveredDateFromOrder( $Order, $statuAM );
         if( $deliveredDate ){
             $retArray['deliveredDate'] = $this->formatDateTimeZone(str_replace("/", "-", $deliveredDate ));
         }
@@ -1379,7 +1385,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
             return false;
         }
 
-        $trackingData = $this->getTrackingOrder($Order);
+        $trackingData = $this->getTrackingOrder($Order, $statuAM);
         if ($trackingData['number'] != '') {
             $params["tracking"] = $trackingData;
         }
@@ -1550,7 +1556,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
                 "total" => $Order->getBaseGrandTotal()
             );
 
-            $arrTracking = $this->getTrackingOrder($Order);
+            $arrTracking = $this->getTrackingOrder($Order, $statuAM);
             $arrInvoice = $this->getInvoiceOrder($Order, $storeID);
 
             if($arrTracking["number"] != ''){
