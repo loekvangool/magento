@@ -71,6 +71,8 @@
 "successfully saved","successfully saved"
 "By checking to yes, when it is imported into an application status paid in Anymarket, a record in Invoice will be created, remember to link a status that allows billing with PAGO.","By checking to yes, when it is imported into an application status paid in Anymarket, a record in Invoice will be created, remember to link a status that allows billing with PAGO."
 "Create payment record when importing paid","Create payment record when importing paid"
+"Apply Timezone on the completion date when there is no comment","Apply Timezone on the completion date when there is no comment"
+"When you mark as yes, when the treatment is done to send the conclusion date and this is not explicit in the comments, it will pick up the date of the comment and apply the timezone, if you check how it will not get the date and send.","When you mark as yes, when the treatment is done to send the conclusion date and this is not explicit in the comments, it will pick up the date of the comment and apply the timezone, if you check how it will not get the date and send."
 "Error synchronizing order number: ","Error synchronizing order number: "
 "Are you sure you want to export the categories?","Are you sure you want to export the categories?"
 "A queue is already in process.","A process is already in process."

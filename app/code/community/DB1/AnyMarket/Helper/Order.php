@@ -102,7 +102,7 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
         $deliveredDateAlt = null;
         foreach ($Order->getStatusHistoryCollection() as $item) {
             if($statuAM == "CONCLUDED" &&  $item->getStatus() == $Order->getStatus() ){
-                $deliveredDateAlt = $this->formatDateTimeZone( str_replace("/", "-", $item->getCreatedAt()));
+                $deliveredDateAlt = $item->getCreatedAt();
             }
 
             $CommentCurr = strtolower($item->getComment());
@@ -1305,7 +1305,14 @@ class DB1_AnyMarket_Helper_Order extends DB1_AnyMarket_Helper_Data
 
         $deliveredDate = $this->getDeliveredDateFromOrder( $Order, $statuAM );
         if( $deliveredDate ){
-            $retArray['deliveredDate'] = $this->formatDateTimeZone(str_replace("/", "-", $deliveredDate ));
+            $storeID = $Order->getStoreId();
+            $needApplyTimeZone = Mage::getStoreConfig('anymarket_section/anymarket_integration_order_group/anymarket_apply_timezone_in_concluded_date', $storeID);
+            if($needApplyTimeZone == "1") {
+                $retArray['deliveredDate'] = $this->formatDateTimeZone(str_replace("/", "-", $deliveredDate));
+            } else {
+                $dateTmpDel =  new DateTime(str_replace("/", "-", $deliveredDate ));
+                $retArray['deliveredDate'] = date_format($dateTmpDel, 'Y-m-d\TH:i:s\Z');
+            }
         }
 
         return $retArray;

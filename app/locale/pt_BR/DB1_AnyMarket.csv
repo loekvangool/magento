@@ -89,6 +89,8 @@
 "Gram","Grama"
 "By checking to yes, when it is imported into an application status paid in Anymarket, a record in Invoice will be created, remember to link a status that allows billing with PAGO.","Ao marcar como sim, no momento que for importado um pedido do status pago no Anymarket, sera criado um registro em Fatura, lembre-se de vincular um status que permite faturamento com o PAGO."
 "Create payment record when importing paid","Criar registro de pagamento ao importar pago"
+"Apply Timezone on the completion date when there is no comment","Aplicar Timezone na data de concluido quando não houver nos comentários"
+"When you mark as yes, when the treatment is done to send the conclusion date and this is not explicit in the comments, it will pick up the date of the comment and apply the timezone, if you check how it will not get the date and send.","Ao marcar como sim, quando for feito o tratamento para enviar a data de conclusão e esta não estiver explicita nos comentários, ele ira pegar a data do comentário e aplicar o timezone, caso marque como não ele ira pegar a data e enviar."
 "Clean Logs by User.","Logs limpo pelo Usuario."
 "Are you sure you want to export the categories?","Tem certeza de que deseja exportar as categorias?"
 "Already existing SKU in anymarket","SKU ja existente no Anymarket"

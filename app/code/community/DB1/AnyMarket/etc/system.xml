@@ -933,10 +933,21 @@
                             <source_model>adminhtml/system_config_source_yesno</source_model>
                         </anymarket_create_reg_pay_field>
 
+                        <anymarket_apply_timezone_in_concluded_date translate="label comment">
+                            <label>Apply Timezone on the completion date when there is no comment</label>
+                            <comment>When you mark as yes, when the treatment is done to send the conclusion date and this is not explicit in the comments, it will pick up the date of the comment and apply the timezone, if you check how it will not get the date and send.</comment>
+                            <sort_order>4</sort_order>
+                            <show_in_default>0</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <frontend_type>select</frontend_type>
+                            <source_model>adminhtml/system_config_source_yesno</source_model>
+                        </anymarket_apply_timezone_in_concluded_date>
+
                         <anymarket_header_am_mg_field>
                             <label>Anymarket para Magento</label>
                             <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
-                            <sort_order>4</sort_order>
+                            <sort_order>5</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>2</show_in_store>
@@ -946,7 +957,7 @@
                             <label>Status Order (Anymarket to Magento)</label>
                             <backend_model>adminhtml/system_config_backend_serialized_array</backend_model>
                             <frontend_model>db1_anymarket/system_config_source_orders_statusammg_values</frontend_model>
-                            <sort_order>5</sort_order>
+                            <sort_order>6</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -956,7 +967,7 @@
                         <anymarket_header_mg_am_field>
                             <label>Magento para Anymarket</label>
                             <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
-                            <sort_order>6</sort_order>
+                            <sort_order>7</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>2</show_in_store>
@@ -966,7 +977,7 @@
                             <label>Status Order (Magento to Anymarket)</label>
                             <backend_model>adminhtml/system_config_backend_serialized_array</backend_model>
                             <frontend_model>db1_anymarket/system_config_source_orders_statusmgam_values</frontend_model>
-                            <sort_order>7</sort_order>
+                            <sort_order>8</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -976,7 +987,7 @@
                         <anymarket_header_custom_invoice_field>
                             <label>Modelo customizado fatura</label>
                             <frontend_model>adminhtml/system_config_form_field_heading</frontend_model>
-                            <sort_order>8</sort_order>
+                            <sort_order>9</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -986,7 +997,7 @@
                             <label>Método de Captura</label>
                             <frontend_type>select</frontend_type>
                             <source_model>db1_anymarket/system_config_source_general_invoice_values</source_model>
-                            <sort_order>9</sort_order>
+                            <sort_order>10</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -1004,7 +1015,7 @@
                                                 <span style="color: red;">&ltdi&gt <:di></span>: Inicio data emissão da nota <br>
                                                 <span style="color: red;">&ltdf&gt <:df></span>: Fim data emissão da nota
                                                 ]]></tooltip>
-                            <sort_order>10</sort_order>
+                            <sort_order>11</sort_order>
                             <show_in_default>0</show_in_default>
                             <show_in_website>0</show_in_website>
                             <show_in_store>1</show_in_store>
@@ -1022,7 +1033,7 @@
                     <comment>
                         <![CDATA[
                             <div>
-                                <h2>v. 2.22.1</h2>
+                                <h2>v. 2.22.2</h2>
                                 <hr>
                                 <h3>Desenvolvido por<br> NovaPC - Tecnologia da Informação.</h3>
                                 <img src="http://novapc.com.br/images/logo.png" alt="NovaPC" height="100" width="150">
